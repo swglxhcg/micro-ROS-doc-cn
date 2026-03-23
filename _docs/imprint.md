@@ -1,9 +1,9 @@
 ---
 permalink: /docs/imprint
-title: Imprint
+title: 版权声明
 ---
 
-# Published by:
+# 发布者：
 
 eProsima,
 
@@ -13,29 +13,25 @@ Plaza de la Encina 10-11 Nucleo 4 2ª Planta,
 
 Madrid, Spain.
 
-E-mail: info@eprosima.com
+电子邮件：info@eprosima.com
 
-Telephone: +34 918043448
+电话：+34 918043448
 
-Represented by the CEO:
-Jaime Martin Losa.
+代表：首席执行官 Jaime Martin Losa。
 
-# Edited by:
+# 编辑：
 
-Members of the EU project [OFERA](http://ofera.eu/):
+欧盟项目 [OFERA](http://ofera/) 的成员：
 
-* eProsima.
-* Robert Bosch GmbH.
-* ŁUKASIEWICZ - Instytut PIAP.
-* FIWARE Foundation.
+* eProsima。
+* Robert Bosch GmbH。
+* ŁUKASIEWICZ - Instytut PIAP。
+* FIWARE Foundation。
 
-# Disclaimer
+# 免责声明
 
-The editors made an effort to ensure that the content of this web site is kept up to date, keeping it accurate and complete.
-Nevertheless, errors can be present.
-The editors and publisher(s) do not give any warranty in terms of the accuracy or completeness of material on this web site and disclaim all liability for loss or damage incurred derived from the use of content obtained from this web.
+编辑者已尽力确保网站内容保持最新、准确和完整。尽管如此，可能存在错误。编辑者和出版商不对本网站上材料的准确性或完整性提供任何保证，并免除因使用从本 网站获取的内容而导致的任何损失或损害的任何责任。
 
-The publisher neither the editors can assume any liability for the content of external pages. The owner of those external pages, in the case, is the sole responsible for their content.
+出版商和编辑者均不对外部页面的内容承担任何责任。这些外部页面的所有者是其内容的唯一责任方。
 
-Registered trademarks and copyrighted text and images are not (generally) indicated as such on this web site content.
-The absence of such indications in no way implies that these names, images or text belong to the public domain, their original ownership is keeped untouched.
+注册商标和受版权保护的文本和图片在本网站内容中（通常）未标明为此类信息。这些标识的缺失绝不意味着这些名称、图片或文本属于公共领域，其原始所有权保持不变。

@@ -1,5 +1,5 @@
 ---
-title: First micro-ROS Application on Zephyr
+title: Zephyr 上的第一个 micro-ROS 应用
 permalink: /docs/tutorials/core/first_application_rtos/zephyr/
 redirect_from:
   - /docs/tutorials/advanced/zephyr/zephyr_getting_started/
@@ -7,14 +7,14 @@ redirect_from:
 
 <img src="https://img.shields.io/badge/Tested_on-Humble-green" style="display:inline"/> <img src="https://img.shields.io/badge/Tested_on-Rolling-green" style="display:inline"/> <img src="https://img.shields.io/badge/Tested_on-Iron-green" style="display:inline"/>
 
-In this tutorial, you'll learn the use of micro-ROS with Zephyr by testing a Ping Pong application.
+在本教程中，您将通过测试 Ping Pong 应用程序来学习在 Zephyr 上使用 micro-ROS。
 {% include first_application_common/target_hardware.md %}
-* [USB-to-mini-USB cable](https://www.olimex.com/Products/Components/Cables/CABLE-USB-A-MINI-1.8M/)
+* [USB转Mini-USB线](https://www.olimex.com/Products/Components/Cables/CABLE-USB-A-MINI-1.8M/)
 
 {% include first_application_common/build_system.md %}
 
 ```bash
-# Create step
+# 创建步骤
 ros2 run micro_ros_setup create_firmware_ws.sh zephyr olimex-stm32-e407
 ```
 
@@ -22,33 +22,29 @@ ros2 run micro_ros_setup create_firmware_ws.sh zephyr olimex-stm32-e407
 
 {% include first_application_common/config.md %}
 
-In this tutorial, we will use a USB transport (labeled as `serial-usb`) and focus on the out-of-the-box `ping_pong`
-application located at `firmware/zephyr_apps/apps/ping_pong`. To execute this application with the chosen transport,
-run the configuration command above by specifying the `[APP]` and `[OPTIONS]` parameters as below:
+在本教程中，我们将使用 USB 传输（标记为 `serial-usb`），并重点介绍位于 `firmware/zephyr_apps/apps/ping_pong` 的开箱即用的 `ping_pong` 应用程序。要使用所选传输执行此应用程序，请通过如下指定 `[APP]` 和 `[OPTIONS]` 参数来运行上述配置命令：
 
 ```bash
-# Configure step with ping_pong app and serial-usb transport
+# 使用 ping_pong 应用程序和串口-USB 传输进行配置步骤
 ros2 run micro_ros_setup configure_firmware.sh ping_pong --transport serial-usb
 ```
-You can check the complete content of the `ping_pong` app
-[here](https://github.com/micro-ROS/zephyr_apps/tree/humble/apps/ping_pong).
+您可以在[此处](https://github.com/micro-ROS/zephyr_apps/tree/humble/apps/ping_pong)查看 `ping_pong` 应用程序的完整内容。
 
 {% include first_application_common/pingpong_logic.md %}
 
-The contents of the Zephyr app specific files can be found here:
-[main.c](https://github.com/micro-ROS/zephyr_apps/blob/humble/apps/ping_pong/src/main.c),
-[app-colcon.meta](https://github.com/micro-ROS/zephyr_apps/blob/humble/apps/ping_pong/app-colcon.meta),
+Zephyr 应用程序特定文件的内容可以在以下位置找到：
+[main.c](https://github.com/micro-ROS/zephyr_apps/blob/humble/apps/ping_pong/src/main.c)、
+[app-colcon.meta](https://github.com/micro-ROS/zephyr_apps/blob/humble/apps/ping_pong/app-colcon.meta)、
 [CMakeLists.txt](https://github.com/micro-ROS/zephyr_apps/blob/humble/apps/ping_pong/CMakeLists.txt)
-and [serial-usb.conf](https://github.com/micro-ROS/zephyr_apps/blob/humble/apps/ping_pong/serial-usb.conf).
-A thorough review of these files is illustrative of how to create a micro-ROS app in this RTOS.
+和 [serial-usb.conf](https://github.com/micro-ROS/zephyr_apps/blob/humble/apps/ping_pong/serial-usb.conf)。
+仔细查看这些文件可以说明如何在此 RTOS 中创建 micro-ROS 应用程序。
 
 {% include first_application_common/build_and_flash.md %}
 
 {% include first_application_common/agent_creation.md %}
 
-Then, depending on the selected transport and RTOS, the board connection to the agent may differ.
-In this tutorial, we're using the Olimex STM32-E407 USB connection, for which the Olimex development board is connected
-to the computer using the USB OTG 2 connector (the miniUSB connector that is furthest from the Ethernet port).
+然后，根据所选的传输和 RTOS，开发板与代理的连接方式可能有所不同。
+在本教程中，我们使用 Olimex STM32-E407 USB 连接，Olimex 开发板通过 USB OTG 2 连接器（远离以太网端口的 MiniUSB 连接器）连接到计算机。
 
 <img width="400" style="padding-right: 25px;" src="../imgs/6.jpg">
 
@@ -56,4 +52,4 @@ to the computer using the USB OTG 2 connector (the miniUSB connector that is fur
 
 {% include first_application_common/test_app_rtos.md %}
 
-This completes the First micro-ROS Application on Zephyr tutorial. Do you want to [go back](../) and try a different RTOS, i.e. NuttX or FreeRTOS?
+这完成了 Zephyr 上的第一个 micro-ROS 应用程序教程。您想[返回](../)并尝试不同的 RTOS，即 NuttX 或 FreeRTOS 吗？

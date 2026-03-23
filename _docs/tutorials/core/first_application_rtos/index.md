@@ -1,11 +1,11 @@
 ---
-title: First micro-ROS Application on an RTOS
+title: 在 RTOS 上构建第一个 micro-ROS 应用
 permalink: /docs/tutorials/core/first_application_rtos/
 ---
 
-After you have completed the [First micro-ROS application on Linux tutorial](../first_application_linux), you are now ready to flash a microcontroller with this application based on a Real-Time Operating System (RTOS).
+在完成 [在 Linux 上构建第一个 micro-ROS 应用教程](../first_application_linux) 后，您现在可以将此应用程序烧录到基于实时操作系统 (RTOS) 的微控制器上了。
 
-Micro-ROS currently supports three different RTOS, namely NuttX, FreeRTOS, and Zephyr. Of course, the micro-ROS-related sections of the application code are independent of the underlying RTOS. Also, the basic tooling is the same as we have integrated the RTOS tools with the ROS 2 meta build system colcon. However, there are subtle differences in the configuration and the definition of the executables between the three RTOS. Therefore, for this tutorial, please decide for one RTOS to use:
+Micro-ROS 目前支持三个不同的 RTOS，即 NuttX、FreeRTOS 和 Zephyr。当然，应用程序代码中与 micro-ROS 相关的部分独立于底层 RTOS。此外，基本工具与集成 RTOS 工具和 ROS 2 元构建系统 colcon 相同。但是，三种 RTOS 在配置和可执行文件定义方面存在细微差别。因此，在本教程中，请选择要使用的一个 RTOS：
 
 <table style="border:none;">
  <tr>

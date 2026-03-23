@@ -1,21 +1,21 @@
 ---
-title: Embedded Transform (TF)
+title: 嵌入式变换 (TF)
 permalink: /docs/concepts/client_library/embedded_tf/
 redirect_from: /embedded_tf/
 ---
 
-## Introduction and Goal
+## 简介和目标
 
-The TF transform graph, with its support for both a temporal history, and distributed information sources, has been a novel tool for robotics frameworks when it was released in 2008. Functionally, it is based in scene graph concepts known from computer graphics [[Foote 2013]](https://ieeexplore.ieee.org/document/6556373), but these only rarely offer distribution, and did not offer temporal histories at all (mainly, because this is not needed for frame-based rendering applications like in computer graphics). Distributed scene graphs have become more widely available also in computer graphics. In robotics, work by de Laet et al. [[De Laet et al. 2013]](https://ieeexplore.ieee.org/document/6696693) has extended transforms graphs to also contain twist (i.e., angular motion) information, and to provide more compile-time error checking. This is currently not integrated with distribution mechanisms, but could be used on a single system.
-One persistent issue with transform graphs has been their resource use. ROS TF works through replicated copies of the entire transform tree at every node that uses it, and is implemented through unicast TCP connections between nodes. In systems with many dynamic parts, this has sometimes been called the ``TF firehose``, because of the large stream of incoming messages.
-micro-ROS will go beyond this state of the art by running the dynamic transform tree in an embedded device, while keeping resource use to a minimum based on an analysis of the spatial and temporal details actually necessary. Further, enabling real-time queries even in the face of concurrent updates through integration will be realized through integration with the micro-ROS real-time executor. It is also planned to integrate the embedded TF will with the node lifecycle to achieve further power-savings
+TF 变换图于 2008 年发布时，凭借其对时间历史和分布式信息源的支持，已成为机器人框架的创新工具。从功能上讲，它基于计算机图形学中已知的场景图概念 [[Foote 2013]](https://ieeexplore.ieee.org/document/6556373)，但这些概念很少提供分布式支持，而且根本不提供时间历史（主要是因为对于计算机图形学中基于帧的渲染应用不需要这些）。分布式场景图在计算机图形学中也变得更加普遍。在机器人技术中，de Laet 等人 [[De Laet et al. 2013]](https://ieeexplore.ieee.org/document/6696693) 的工作将变换图扩展为包含 twist（即角运动）信息，并提供更多编译时错误检查。这目前尚未与分布式机制集成，但可以在单个系统上使用。
 
+变换图一直存在的一个持久问题是资源使用。ROS TF 通过在每个使用它的节点上复制整个变换树副本来实现，并通过节点之间的单播 TCP 连接进行实现。在具有许多动态部分的系统中，由于大量传入消息流，有时被称为 ``TF firehose``。
 
-## Roadmap
+micro-ROS 将超越这一最新技术水平，在嵌入式设备上运行动态变换树，同时基于对实际所需空间和时间细节的分析，将资源使用保持在最低限度。此外，通过与 micro-ROS 实时执行器的集成，即使在面对并发更新时也能实现实时查询。计划还将嵌入式 TF 与节点生命周期集成，以实现进一步的节能
 
-This task has been cancelled as discussed in the EU project review in September 2019.
+## 路线图
 
+如 2019 年 9 月欧盟项目审查中所讨论的，此任务已被取消。
 
-## Acknowledgments
+## 致谢
 
-This activity has received funding from the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation programme (grant agreement n° 780785).
+本活动获得了欧盟地平线 2020 研究与创新计划下的欧洲研究理事会 (ERC) 的资助（资助协议编号 780785）。

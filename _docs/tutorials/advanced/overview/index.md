@@ -1,32 +1,32 @@
 ---
-title: Overview
+title: 概述
 permalink: /docs/tutorials/advanced/overview/
 redirect_from:
   - /docs/tutorials/advanced/
 ---
 
-This chapter provides a number of advanced tutorials for those users who already have some previous micro-ROS knowledge. They are useful to interact with micro-ROS at a deeper level compared with the [**First Step Tutorials**](../../core/overview). There is no specific order recommended to take these tutorials, as each addresses a different aspect of the micro-ROS stack and toolchain.
+本章为已经具备一定 micro-ROS 知识的用户提供一系列高级教程。与 [**入门教程**](../../core/overview) 相比，这些教程有助于在更深层次上与 micro-ROS 进行交互。建议按特定顺序学习这些教程，因为每个教程涉及 micro-ROS 堆栈和工具链的不同方面。
 
-* [**Optimizing the Middleware Configuration**](../microxrcedds_rmw_configuration/)
+* [**优化中间件配置**](../microxrcedds_rmw_configuration/)
 
-  In this tutorial, we'll guide you through the configuration of the middleware between a microcontroller and the micro-ROS agent running on some Linux-based microprocessor, to optimize it for your specific use-case and application.
+  在本教程中，我们将引导您配置微控制器与运行在某些基于 Linux 的微处理器上的 micro-ROS 代理之间的中间件，以针对您的特定用例和应用程序进行优化。
 
-* [**How to include a custom ROS message in micro-ROS**](../create_new_type/)
+* [**如何在 micro-ROS 中包含自定义 ROS 消息**](../create_new_type/)
 
-  This tutorial explains how to create or include a custom ROS message type in a micro-ROS application - and in particular how to bring it into the [build system](https://github.com/micro-ROS/micro_ros_setup).
+  本教程解释如何在 micro-ROS 应用程序中创建或包含自定义 ROS 消息类型，特别是如何将其引入[构建系统](https://github.com/micro-ROS/micro_ros_setup)。
 
-* [**How to use custom QoS in micro-ROS**](../create_dds_entities_by_ref/)
+* [**如何在 micro-ROS 中使用自定义 QoS**](../create_dds_entities_by_ref/)
 
-  This tutorial explains the procedure for creating micro-ROS entities using fully configurable QoS settings by using the ROS 2 (DDS) entities creation mode *by references* as allowed by the micro-ROS default middleware (Micro XRCE-DDS Client).
+  本教程解释使用 ROS 2 (DDS) 实体创建模式 *by references*（由 micro-ROS 默认中间件 Micro XRCE-DDS Client 允许）创建具有完全可配置 QoS 设置的 micro-ROS 实体的步骤。
 
-* [**Creating custom micro-ROS transports**](../create_custom_transports/)
+* [**创建自定义 micro-ROS 传输**](../create_custom_transports/)
 
-  This tutorial aims at providing step-by-step guidance for those users interested in creating micro-ROS custom transports, instead of using the ones provided by default in the micro-ROS tools set.
+  本教程旨在为有兴趣创建自定义 micro-ROS 传输的用户提供逐步指导，而不是使用 micro-ROS 工具集中默认提供的传输。
 
-* [**Creating custom static micro-ROS library**](../create_custom_static_library/)
+* [**创建自定义静态 micro-ROS 库**](../create_custom_static_library/)
 
-  This tutorial aims at providing step-by-step guidance for those users interested in compiling micro-ROS as a standalone library in order to integrate it in custom development tools.
+  本教程旨在为有兴趣将 micro-ROS 编译为独立库以将其集成到自定义开发工具中的用户提供逐步指导。
 
-* [**Benchmarking with the Shadow-Builder**](../benchmarking/)
+* [**使用 Shadow-Builder 进行基准测试**](../benchmarking/)
 
-  This tutorial aims at describing a specific benchmarking tooling called the *Shadow Builder*. More specifically, it explains how to create a plugin from A to Z and how to instrument the code.
+  本教程旨在描述一种称为 *Shadow-Builder* 的特定基准测试工具。更具体地说，它解释了如何从头到尾创建插件以及如何为代码添加检测工具。

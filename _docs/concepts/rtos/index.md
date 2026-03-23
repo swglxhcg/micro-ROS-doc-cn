@@ -1,22 +1,22 @@
 ---
-title: Why a Real-Time Operating System?
+title: 为什么需要实时操作系统？
 permalink: /docs/concepts/rtos/
 ---
 
-The use of Real-Time Operating Systems (RTOSes) is a general practice in nowadays embedded systems. These systems typically consist of a resource-constrained microcontroller that executes an application which requires an interaction with external components. In many cases, this application contains a time-critical task where a strict time deadline or deterministic response is required.
+实时操作系统 (RTOS) 的使用是当今嵌入式系统中的通用实践。这些系统通常由资源受限的微控制器组成，该微控制器执行需要与外部组件交互的应用程序。在许多情况下，此应用程序包含需要严格的时间截止期限或确定性响应的关键时间任务。
 
-Bare-metal applications are also used nowadays, but require very low-level programming skills and lack of the hardware abstraction layers that RTOSes offers. On the other hand, RTOSes typically use hardware abstraction layers (HAL) that ease the use of hardware resources, such as timers and communication buses, lightening the development and allowing the reuse of code. In addition, they offer threads and tasks entities which, together with the use of schedulers, provide the necessary tools to implement determinism in the applications. The scheduling consists of different algorithms, among which users can choose the ones that better fits their applications. Another feature that RTOSes normally offer is the stack management, helping in the correct memory usage of the MCU resources, a valuable good in embedded systems.
+当今也使用裸金属应用程序，但需要非常低级的编程技能，并且缺乏 RTOS 提供的硬件抽象层。另一方面，RTOS 通常使用硬件抽象层 (HAL)，以便轻松使用硬件资源，例如定时器和通信总线，减轻开发工作并允许代码重用。此外，它们提供线程和任务实体，结合调度器的使用，提供在应用程序中实现确定性所需的工具。调度包含多种算法，用户可以选择最适合其应用程序的算法。RTOS 通常提供的另一个特性是堆栈管理，帮助正确使用 MCU 资源，这在嵌入式系统中非常宝贵。
 
-## RTOS in micro-ROS
+## micro-ROS 中的 RTOS
 
-Due to the benefits presented above, micro-ROS integrates RTOSes in its software stack. This enhances the capabilities of micro-ROS and allows reusing all the tools and functions provided by the RTOSes. As the micro-ROS software stack is modular, the exchange of software entities is expected and desired at all levels, including the RTOS layer.
+由于上述好处，micro-ROS 将 RTOS 集成到其软件堆栈中。这增强了 micro-ROS 的能力，并允许重用 RTOS 提供的所有工具和功能。由于 micro-ROS 软件堆栈是模块化的，因此软件实体的交换在所有层面（包括 RTOS 层）都是预期和希望的。
 
-Like the Operating Systems (OSes) available for computers, the RTOSes also have different support for standard interfaces. This is established in a family of standards named [POSIX](https://pubs.opengroup.org/onlinepubs/9699919799/). As we aim to port or reuse code of ROS 2 that was natively coded in Linux (a mostly POSIX-compliant OS), the use of RTOSes that comply with these standards is beneficial, as the porting effort of the code is minimal. Both NuttX and Zephyr comply to a good degree with POSIX standards, making the porting effort minimal, whereas FreeRTOS provides a plugin, *FreeRTOS+POSIX*, thanks to which an existing POSIX compliant application can be easily ported to FreeRTOS ecosystem, and therefore leverage all its functionality.
+与计算机可用的操作系统 (OS) 一样，RTOS 对标准接口也有不同的支持。这在名为 [POSIX](https://pubs.opengroup.org/onlinepubs/9699919799/) 的标准系列中建立。由于我们的目标是在 Linux（一个大部分符合 POSIX 的操作系统）中原生编码的 ROS 2 代码的移植或重用，使用符合这些标准的 RTOS 是有益的，因为代码的移植工作最少。NuttX 和 Zephyr 在很大程度上符合 POSIX 标准，使移植工作最少，而 FreeRTOS 提供了一个插件 *FreeRTOS+POSIX*，借助它现有的符合 POSIX 的应用程序可以轻松移植到 FreeRTOS 生态系统，从而利用其所有功能。
 
-Notice that calls to the RTOS functions are made by several abstraction layers in the micro-ROS stack. The main layer using the RTOS primitives is the middleware. Indeed, it requires accessing the transport resources (serial, UDP or 6LoWPAN communications for example) and the time resources of the RTOS in order to operate properly. In addition, it is desirable that the micro-ROS client libraries (rcl, rclc) have also access to RTOS resources in order to handle mechanisms such as scheduling or power management. In this way, the developer can optimize the application at various levels.
+请注意，micro-ROS 堆栈中的多个抽象层都会调用 RTOS 函数。使用 RTOS 原语的主要层是中间件。实际上，它需要访问传输资源（例如串口、UDP 或 6LoWPAN 通信）和 RTOS 的时间资源才能正常操作。此外，micro-ROS 客户端库（rcl、rclc）也最好能够访问 RTOS 资源，以便处理调度或电源管理等机制。这样，开发者可以在各个层面优化应用程序。
 
-At present, micro-ROS supports three RTOSes, which all come with (basic) POSIX implementations: FreeRTOS, Zephyr and NuttX, all of them [integrated into the micro-ROS build system](/docs/concepts/build_system/).
-By clicking on the logos below, you'll be redirected to the Overview section, where the most relevant aspects and key features of each RTOS are presented.
+目前，micro-ROS 支持三种 RTOS，它们都带有（基本）POSIX 实现：FreeRTOS、Zephyr 和 NuttX，它们都[集成到 micro-ROS 构建系统](/docs/concepts/build_system/)中。
+点击下面的徽标，您将被重定向到概述部分，其中介绍了每个 RTOS 的最相关方面和关键特性。
 
 <table style="border:none;">
  <tr>
@@ -26,6 +26,6 @@ By clicking on the logos below, you'll be redirected to the Overview section, wh
  </tr>
 </table>
 
-A thorough technical comparison between these RTOSes can be found [here](/docs/concepts/rtos/comparison/).
+这些 RTOS 之间的详细技术比较可以在[这里](/docs/concepts/rtos/comparison/)找到。
 
 {% include logos_disclaimer.md %}

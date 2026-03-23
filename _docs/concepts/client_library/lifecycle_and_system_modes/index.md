@@ -48,8 +48,8 @@ The main features of the approach are (detailed in the remainder):
 
 1. _Extended Lifecycle_: Extensible concept to specify the runtime states of components, i.e ROS 2 lifecycle nodes.
 2. _System Hierarchy and Modes_: Modeling approach for specifying a ROS system in terms of its system hierarchy and _system modes_, i.e. different (sub-)system configurations.
-3. _Mode Manager_: A module to manage and change the system runtime configuration.
-4. _Mode Inference_: A module for deriving the entire system state and mode from observable system information, i.e. states, modes, and parameters of its components.
+3. _Mode Inference_: A module for deriving the entire system state and mode from observable system information, i.e. states, modes, and parameters of its components.
+4. _Mode Manager_: A module to manage and change the system runtime configuration.
 5. _Error Handling_: Lightweight concept for specifying an error handling and recovery mechanism.
 
 ## Requirements

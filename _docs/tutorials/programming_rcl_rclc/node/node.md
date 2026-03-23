@@ -1,112 +1,112 @@
 ---
-title: Nodes
+title: 节点
 permalink: /docs/tutorials/programming_rcl_rclc/node/
 ---
 
 <img src="https://img.shields.io/badge/Written_for-Humble-green" style="display:inline"/> <img src="https://img.shields.io/badge/Tested_on-Rolling-green" style="display:inline"/> <img src="https://img.shields.io/badge/Tested_on-Iron-green" style="display:inline"/>
 
-ROS 2 nodes are the main participants on ROS 2 ecosystem. They will communicate between each other using publishers, subscriptions, services, etc. Further information about ROS 2 nodes can be found [here](https://docs.ros.org/en/iron/Tutorials/Understanding-ROS2-Nodes.html)
+ROS 2 节点是 ROS 2 生态系统中的主要参与者。它们将通过发布者、订阅者、服务等进行相互通信。关于 ROS 2 节点的更多信息可以在[这里](https://docs.ros.org/en/iron/Tutorials/Understanding-ROS2-Nodes.html)找到
 
 
-- [Initialization](#initialization)
-  - [Cleaning Up](#cleaning-up)
-- [Lifecycle](#lifecycle)
-  - [Initialization](#initialization-1)
-  - [Callbacks](#callbacks)
-  - [Running](#running)
-  - [Cleaning Up](#cleaning-up-1)
-  - [Limitations](#limitations)
+- [初始化](#initialization)
+  - [清理](#cleaning-up)
+- [生命周期](#lifecycle)
+  - [初始化](#initialization-1)
+  - [回调](#callbacks)
+  - [运行](#running)
+  - [清理](#cleaning-up-1)
+  - [限制](#limitations)
 
-## Initialization
+## 初始化
 
-- Create a node with default configuration:
+- 使用默认配置创建节点：
   ```c
-  // Initialize micro-ROS allocator
+  // 初始化 micro-ROS 分配器
   rcl_allocator_t allocator = rcl_get_default_allocator();
 
-  // Initialize support object
+  // 初始化支持对象
   rclc_support_t support;
   rcl_ret_t rc = rclc_support_init(&support, argc, argv, &allocator);
 
-  // Create node object
+  // 创建节点对象
   rcl_node_t node;
   const char * node_name = "test_node";
 
-  // Node namespace (Can remain empty "")
+  // 节点命名空间（可以保留为空 ""）
   const char * namespace = "test_namespace";
 
-  // Init default node
+  // 初始化默认节点
   rc = rclc_node_init_default(&node, node_name, namespace, &support);
   if (rc != RCL_RET_OK) {
-    ... // Handle error
+    ... // 处理错误
     return -1;
   }
   ```
 
-- Create a node with custom options:
+- 使用自定义选项创建节点：
 
-  The configuration of the node will also be applied to its future elements (Publishers, subscribers, services, ...). The node options are configured on the `rclc_support_t` object with a custom API:
+  节点的配置也将应用于其未来的元素（发布者、订阅者、服务等）。节点选项使用自定义 API 在 `rclc_support_t` 对象上进行配置：
 
   ```c
-  // Initialize micro-ROS allocator
+  // 初始化 micro-ROS 分配器
   rcl_allocator_t allocator = rcl_get_default_allocator();
 
-  // Initialize and modify options (Set DOMAIN ID to 10)
+  // 初始化并修改选项（设置 DOMAIN ID 为 10）
   rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
   rcl_init_options_init(&init_options, allocator);
   rcl_init_options_set_domain_id(&init_options, 10);
 
-  // Initialize rclc support object with custom options
+  // 使用自定义选项初始化 rclc 支持对象
   rclc_support_t support;
   rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator);
 
-  // Create node object
+  // 创建节点对象
   rcl_node_t node;
   const char * node_name = "test_node";
 
-  // Node namespace (Can remain empty "")
+  // 节点命名空间（可以保留为空 ""）
   const char * namespace = "test_namespace";
 
-  // Init node with configured support object
+  // 使用配置的支持对象初始化节点
   rclc_node_init_default(&node, node_name, namespace, &support);
 
   if (rc != RCL_RET_OK) {
-    ... // Handle error
+    ... // 处理错误
     return -1;
   }
   ```
 
-### Cleaning Up
+### 清理
 
-To destroy a initialized node all entities owned by the node (Publishers, subscribers, services, ...) have to be destroyed before the node itself:
+要销毁已初始化的节点，必须先销毁节点拥有的所有实体（发布者、订阅者、服务等），然后再销毁节点本身：
 
 ```c
-// Destroy created entities (Example)
+// 销毁创建的实体（示例）
 rcl_publisher_fini(&publisher, &node);
 ...
 
-// Destroy the node
+// 销毁节点
 rcl_node_fini(&node);
 ```
 
-This will delete the node from ROS2 graph, including any generated infrastructure on the agent (if possible) and used memory on the client.
+这将从 ROS2 图中删除节点，包括代理上生成的任何基础架构（如果可能）和客户端上使用的内存。
 
-## Lifecycle
+## 生命周期
 
-The rclc lifecycle package provides convenience functions in C to bundle an rcl node with the ROS 2 Node Lifecycle state machine, similar to the [rclcpp Lifecycle Node](https://github.com/ros2/rclcpp/blob/master/rclcpp_lifecycle/include/rclcpp_lifecycle/lifecycle_node.hpp) for C++. Further information about ROS 2 node lifecycle can be found [here](https://design.ros2.org/articles/node_lifecycle.html)
+rclc 生命周期包提供了 C 语言中的便捷函数，用于将 rcl 节点与 ROS 2 节点生命周期状态机捆绑在一起，类似于 C++ 的 [rclcpp Lifecycle Node](https://github.com/ros2/rclcpp/blob/master/rclcpp_lifecycle/include/rclcpp_lifecycle/lifecycle_node.hpp)。关于 ROS 2 节点生命周期的更多信息可以在[这里](https://design.ros2.org/articles/node_lifecycle.html)找到
 
-An usage example is given in the [rclc_examples](https://github.com/ros2/rclc/blob/master/rclc_examples/src/example_lifecycle_node.c) package.
+使用示例见 [rclc_examples](https://github.com/ros2/rclc/blob/master/rclc_examples/src/example_lifecycle_node.c) 包。
 
-### Initialization
+### 初始化
 
-Creation of a lifecycle node as a bundle of an rcl node and the rcl lifecycle state machine. Assuming an already initialized node and executor:
+创建生命周期节点作为 rcl 节点和 rcl 生命周期状态机的捆绑。假设已初始化节点和执行器：
 
 ```c
-// Create rcl state machine
+// 创建 rcl 状态机
 rcl_lifecycle_state_machine_t state_machine =
 rcl_lifecycle_get_zero_initialized_state_machine();
 
-// Create the lifecycle node
+// 创建生命周期节点
 rclc_lifecycle_node_t my_lifecycle_node;
 rcl_ret_t rc = rclc_make_node_a_lifecycle_node(
   &my_lifecycle_node,
@@ -114,17 +114,17 @@ rcl_ret_t rc = rclc_make_node_a_lifecycle_node(
   &state_machine,
   &allocator);
 
-// Register lifecycle services on the allocator
+// 在分配器上注册生命周期服务
 rclc_lifecycle_add_get_state_service(&lifecycle_node, &executor);
 rclc_lifecycle_add_get_available_states_service(&lifecycle_node, &executor);
 rclc_lifecycle_add_change_state_service(&lifecycle_node, &executor);
 ```
 
-*Note: Executor needsto be equipped with 1 handle per node and per service*
+*注意：执行器需要为每个节点和每个服务配备 1 个句柄*
 
-### Callbacks
+### 回调
 
-Optional callbacks are supported to act on lifecycle state changes. Example:
+支持可选回调以在生命周期状态变化时执行操作。示例：
 
 ```c
 rcl_ret_t my_on_configure() {
@@ -133,19 +133,19 @@ rcl_ret_t my_on_configure() {
 }
 ```
 
-To add them to the lifecycle node:
+将它们添加到生命周期节点：
 
 ```c
-// Register lifecycle service callbacks
+// 注册生命周期服务回调
 rclc_lifecycle_register_on_configure(&lifecycle_node, &my_on_configure);
 rclc_lifecycle_register_on_activate(&lifecycle_node, &my_on_activate);
 rclc_lifecycle_register_on_deactivate(&lifecycle_node, &my_on_deactivate);
 rclc_lifecycle_register_on_cleanup(&lifecycle_node, &my_on_cleanup);
 ```
 
-### Running
+### 运行
 
-To change states of the lifecycle node:
+更改生命周期节点的状态：
 
 ```c
 bool publish_transition = true;
@@ -160,16 +160,16 @@ rc += rclc_lifecycle_change_state(
   publish_transition);
 ```
 
-Except for error processing transitions, transitions are usually triggered from outside, e.g., by ROS 2 services.
+除了错误处理转换外，转换通常从外部触发，例如通过 ROS 2 服务。
 
-### Cleaning Up
+### 清理
 
-To clean everything up, simply do
+要清理一切，只需执行
 
 ```c
 rc += rcl_lifecycle_node_fini(&my_lifecycle_node, &allocator);
 ```
 
-### Limitations
+### 限制
 
-Lifecycle services cannot yet be called via ros2 lifecycle client (`ros2 lifecycle set /node ...`). Instead use the ros2 service CLI, (Example: `ros2 service call /node/change_state lifecycle_msgs/ChangeState "{transition: {id: 1, label: configure}}"`).
+生命周期服务尚无法通过 ros2 生命周期客户端调用（`ros2 lifecycle set /node ...`）。请改用 ros2 service CLI，（示例：`ros2 service call /node/change_state lifecycle_msgs/ChangeState "{transition: {id: 1, label: configure}}"`）。

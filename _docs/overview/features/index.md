@@ -1,5 +1,5 @@
 ---
-title: Features and Architecture
+title: 特性和架构
 permalink: /docs/overview/features/
 redirect_from:
   - /docs/
@@ -48,67 +48,67 @@ $(document).ready( function() {
   }
 </style>
 
-Micro-ROS offers **seven key features** that make it ready for use in your microcontroller-based robotic project:
+Micro-ROS 提供**七个关键特性**，使其可以随时用于您的基于微控制器的机器人项目：
 
 <div class="feature feature_is_active">
- <div class="feature_title">&#10004; Microcontroller-optimized client API supporting all major ROS concepts<span class="three_dots"> (...)</span></div>
+ <div class="feature_title">&#10004; 针对微控制器优化的客户端 API，支持所有主要 ROS 概念<span class="three_dots"> (...)</span></div>
  <div class="feature_description">
-  <p>Micro-ROS brings all major core concepts such as nodes, publish/subscribe, client/service, node graph, lifecycle, etc. onto microcontrollers (MCU). The client API of micro-ROS (in the C programming language) is based on the standard ROS 2 Client Support Library (rcl) and a set of extensions and convenience functions (rclc).</p>
-  <p>The combination rcl+rclc is optimized for MCUs. After an initialization phase, it can be used without any dynamic memory allocations. The rclc package provides advanced execution mechanisms allowing implementing well-proven scheduling patterns from embedded systems engineering.</p>
+  <p>Micro-ROS 将所有主要核心概念（如节点、发布/订阅、客户端/服务、节点图、生命周期等）带到微控制器 (MCU) 上。Micro-ROS 的客户端 API（采用 C 编程语言）基于标准 ROS 2 客户端支持库 (rcl) 和一组扩展及便捷函数 (rclc)。</p>
+  <p>rcl+rclc 组合针对 MCU 进行了优化。初始化阶段后，它可以无需任何动态内存分配即可使用。rclc 包提供高级执行机制，允许实现嵌入式系统工程中经过验证的调度模式。</p>
  </div>
 </div>
 
 <div class="feature">
- <p class="feature_title">&#10004; Seamless integration with ROS 2<span class="three_dots"> (...)</span></p>
+ <p class="feature_title">&#10004; 与 ROS 2 无缝集成<span class="three_dots"> (...)</span></p>
  <div class="feature_description">
-  <p>The micro-ROS agent connects micro-ROS nodes (i.e. components) on MCUs seamlessly with standard ROS 2 systems. This allows accessing micro-ROS nodes with the known ROS 2 tools and APIs just as normal ROS nodes.</p>
+  <p>Micro-ROS 代理将 MCU 上的 micro-ROS 节点（即组件）与标准 ROS 2 系统无缝连接。这允许使用已知的 ROS 2 工具和 API 访问 micro-ROS 节点，就像普通 ROS 节点一样。</p>
  </div>
 </div>
 
 <div class="feature">
- <p class="feature_title">&#10004; Extremely resource-constrained but flexible middleware<span class="three_dots"> (...)</span></p>
+ <p class="feature_title">&#10004; 资源受限但灵活的中间件<span class="three_dots"> (...)</span)</p>
  <div class="feature_description">
-  <p>Micro XRCE-DDS by eProsima meets all requirements for a middleware for deeply embedded systems. That is why micro-ROS has been one of the applications for this implementation of the new DDS for Extremely Resource Constrained Environments (XRCE) standard. For the integration with the ROS middleware interface (rmw) in the micro-ROS stack, static memory pools were introduced to avoid dynamic memory allocations at runtime.</p>
-  <p>The middleware comes with built-in support for serial transports, UDP over Ethernet, Wi-Fi, and 6LoWPAN, and Bluetooth. Furthermore, the Micro XRCE-DDS source code provides templates for implementing support for further transports.</p>
+  <p>eProsima 的 Micro XRCE-DDS 满足深度嵌入式系统中间件的所有要求。这就是为什么 micro-ROS 成为这一针对极端资源受限环境 (XRCE) 的新 DDS 标准实现的应用程序之一。为了与 micro-ROS 堆栈中的 ROS 中间件接口 (rmw) 集成，引入了静态内存池以避免运行时的动态内存分配。</p>
+  <p>该中间件内置支持串行传输、以太网 UDP、Wi-Fi 和 6LoWPAN，以及蓝牙。此外，Micro XRCE-DDS 源代码提供了用于实现更多传输支持的模板。</p>
  </div>
 </div>
 
 <div class="feature">
- <p class="feature_title">&#10004; Multi-RTOS support with generic build system<span class="three_dots"> (...)</span></p>
+ <p class="feature_title">&#10004; 多 RTOS 支持，通用构建系统<span class="three_dots"> (...)</span></p>
  <div class="feature_description">
-  <p>Micro-ROS supports three popular open-source real-time operating sytems (RTOS): FreeRTOS, Zephyr, and NuttX. It can be ported on any RTOS that comes with a POSIX interface.</p>
-  <p>The RTOS-specific build systems are integrated into few generic setup scripts, which are provided as a ROS 2 package. Therefore, ROS developers can use their usual command line tools. In addition, micro-ROS provides selected integrations with RTOS-specific tool chains (e.g., for ESP-IDF and Zephyr).</p>
+  <p>Micro-ROS 支持三种流行的开源实时操作系统 (RTOS)：FreeRTOS、Zephyr 和 NuttX。它可以移植到任何带有 POSIX 接口的 RTOS 上。</p>
+  <p>RTOS 特定的构建系统集成到少数通用设置脚本中，这些脚本作为 ROS 2 包提供。因此，ROS 开发者可以使用他们常用的命令行工具。此外，micro-ROS 提供了与 RTOS 特定工具链的精选集成（例如，用于 ESP-IDF 和 Zephyr）。</p>
  </div>
 </div>
 
 <div class="feature">
- <p class="feature_title">&#10004; Permissive license<span class="three_dots"> (...)</span></p>
+ <p class="feature_title">&#10004; 宽松的许可证<span class="three_dots"> (...)</span></p>
  <div class="feature_description">
-  <p>Micro-ROS comes under the same permissive license as ROS 2, which is Apache License 2.0. This applies to the micro-ROS client library, the middleware layer, and tools.</p>
-  <p>When creating a project with an underlying RTOS, please take into account the license(s) of the RTOS project or vendor as further explained on the <a href="../license/">license</a> page.</p>
+  <p>Micro-ROS 采用与 ROS 2 相同的宽松许可证，即 Apache License 2.0。这适用于 micro-ROS 客户端库、中间件层和工具。</p>
+  <p>在使用底层 RTOS 创建项目时，请注意 RTOS 项目或供应商的许可证，如<a href="../license/">许可证</a>页面上的进一步说明。</p>
  </div>
 </div>
 
 <div class="feature">
- <p class="feature_title">&#10004; Vibrant community and ecosystem<span class="three_dots"> (...)</span></p>
+ <p class="feature_title">&#10004; 充满活力的社区和生态系统<span class="three_dots"> (...)</span></p>
  <div class="feature_description">
-  <p>Micro-ROS is developed by a constantly growing, self-organized community backed by the Embedded Working Group, a formal ROS 2 Working Group. The community shares entry level tutorials, provides support via Slack and GitHub, and meets in public Working Group video-calls on a monthly basis. As a matter of course, commercial support is provided for the Micro XRCE-DDS by eProsima.</p>
-  <p>This community also create tools around micro-ROS. For example, to optimize micro-ROS-based applications to the MCU hardware, specific benchmarking tools have been developed. These allow checking memory usage, CPU time consumption and general performance.</p>
+  <p>Micro-ROS 由一个不断增长的、自组织的社区开发，该社区由嵌入式工作组（正式的 ROS 2 工作组）支持。社区分享入门级教程，通过 Slack 和 GitHub 提供支持，并在每月一次的公开工作组视频会议中会面。当然，eProsima 为 Micro XRCE-DDS 提供商业支持。</p>
+  <p>该社区还围绕 micro-ROS 创建工具。例如，为了将基于 micro-ROS 的应用优化到 MCU 硬件，开发了特定的基准测试工具。这些工具可以检查内存使用、CPU 时间消耗和整体性能。</p>
  </div>
 </div>
 
 <div class="feature">
- <p class="feature_title">&#10004; Long-term maintainability and interoperability<span class="three_dots"> (...)</span></p>
+ <p class="feature_title">&#10004; 长期可维护性和互操作性<span class="three_dots"> (...)</span></p>
  <div class="feature_description">
-  <p>Micro-ROS is made up of well-established components: Famous open-source RTOSs, a standardized middleware, and the standard ROS 2 Client Support Library (rcl). In this way, the amount of micro-ROS-specific code was minimized for long-term maintainability. At the same time, the micro-ROS stack preserves the modularity of the standard ROS 2 stack. Micro-ROS can be used with a custom middleware layer - and thus standard - or a custom ROS client library.</p>
-  <p>Furthermore, by the <a href="https://soss.docs.eprosima.com/">System-Of-Systems Synthesizer</a> (SOSS), a fast and lightweight <a href="https://www.omg.org/spec/DDS-XTypes">OMG DDS-XTYPES standard</a> integration tool, further middleware protocols can be connected. For example, we have developed the SOSS-FIWARE and SOSS-ROS2 System-Handles, which connect ROS 2 and micro-ROS with the <a href="https://www.fiware.org/">FIWARE Context Broker</a> by the NGSIv2 (Next Generation Service Interface) standard by leveraging the integration capabilities of the SOSS core.</p>
+  <p>Micro-ROS 由成熟的组件组成：著名的开源 RTOS、标准化的中间件和标准 ROS 2 客户端支持库 (rcl)。通过这种方式，为了长期可维护性，最小化了特定于 micro-ROS 的代码量。同时，micro-ROS 堆栈保留了标准 ROS 2 堆栈的模块化。Micro-ROS 可以与自定义中间件层一起使用——因此是标准的——或自定义 ROS 客户端库。</p>
+  <p>此外，通过<a href="https://soss.docs.eprosima.com/">系统综合器</a> (SOSS)，这是一个快速轻量级的<a href="https://www.omg.org/spec/DDS-XTypes">OMG DDS-XTYPES 标准</a>集成工具，可以连接更多中间件协议。例如，我们开发了 SOSS-FIWARE 和 SOSS-ROS2 System-Handle，它们通过利用 SOSS 核心的集成能力，将 ROS 2 和 micro-ROS 与<a href="https://www.fiware.org/">FIWARE Context Broker</a>通过 NGSIv2（下一代服务接口）标准连接起来。</p>
  </div>
 </div>
 
-## Layered and Modular Architecture
+## 分层和模块化架构
 
-Micro-ROS follows the [ROS 2 architecture](https://docs.ros.org/en/rolling/Concepts/Advanced/About-Internal-Interfaces.html) and makes use of its middleware pluggability to use [DDS-XRCE](https://www.omg.org/spec/DDS-XRCE/), which is optimized for microcontrollers. Moreover, it uses POSIX-based RTOS (FreeRTOS, Zephyr, or NuttX) instead of Linux.
+Micro-ROS 遵循 [ROS 2 架构](https://docs.ros.org/en/rolling/Concepts/Advanced/About-Internal-Interfaces.html)，并利用其中间件可插拔性使用针对微控制器优化的 [DDS-XRCE](https://www.omg.org/spec/DDS-XRCE/)。此外，它使用基于 POSIX 的 RTOS（FreeRTOS、Zephyr 或 NuttX）而不是 Linux。
 
 <img src="/img/micro-ROS_architecture.png" style="display: block; margin: auto; width: 100%; max-width: 500px;"/>
 
-Dark blue components are developed specifically for micro-ROS. Light blue components are taken from the standard ROS 2 stack. We seek to contribute as much code back to the ROS 2 mainline codebase as possible.
+深蓝色组件是专门为 micro-ROS 开发的。浅蓝色组件来自标准 ROS 2 堆栈。我们尽可能多地将代码贡献回 ROS 2 主线代码库。

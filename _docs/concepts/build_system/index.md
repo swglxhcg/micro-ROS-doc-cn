@@ -1,69 +1,68 @@
 ---
-title: micro-ROS Build System
+title: micro-ROS 构建系统
 permalink: /docs/concepts/build_system/
 ---
 
-micro-ROS provides two ways of building a micro-ROS application for embedded platforms:
-- _micro_ros_setup:_ integrates and hides the RTOS-specific build tools in few scripts provided as a ROS 2 package.
-- _Platform-specific integrations:_ We have integrated micro-ROS with several platforms build tools. Click [here](/docs/concepts/build_system/external_build_systems/) to learn more.
+micro-ROS 提供了两种为嵌入式平台构建 micro-ROS 应用的方法：
+- _micro_ros_setup:_ 将 RTOS 特定的构建工具集成并隐藏在极少数脚本中，这些脚本作为 ROS 2 包提供。
+- _平台特定集成:_ 我们已将 micro-ROS 与多个平台的构建工具集成。点击[此处](/docs/concepts/build_system/external_build_systems/)了解更多。
 
-**micro_ros_setup** provides a standalone build system in the form of a ROS 2 package for use in any normal ROS 2 workspace. This tool is available in the [micro-ROS/micro_ros_setup](https://github.com/micro-ROS/micro_ros_setup) repository.
+**micro_ros_setup** 提供了一个独立构建系统，以 ROS 2 包的形式用于任何常规 ROS 2 工作区。此工具可在 [micro-ROS/micro_ros_setup](https://github.com/micro-ROS/micro_ros_setup) 存储库中找到。
 
-The **micro_ros_setup** tool allows compiling and generating images that contain micro-ROS apps for the [supported hardware](/docs/overview/hardware/) boards and [RTOSes](/docs/concepts/rtos/).
+**micro_ros_setup** 工具允许编译和生成包含 micro-ROS 应用的镜像，用于[支持的硬件](/docs/overview/hardware/)板和 [RTOS](/docs/concepts/rtos/)。
 
-As the **micro_ros_setup** package can be installed like any other ROS 2 package, its usage will be through the ROS 2 CLI tool. Compiling, generating an image and flashing it on a board can be done just with four ROS 2 commands. A detailed description about the usage of this package can be found in the [tutorial section](/docs/tutorials/core/first_application_rtos/).
+由于 **micro_ros_setup** 包可以像任何其他 ROS 2 包一样安装，其使用将通过 ROS 2 CLI 工具完成。编译、生成镜像和将其烧录到板上只需四个 ROS 2 命令即可完成。关于此包使用方法的详细说明可在[教程部分](/docs/tutorials/core/first_application_rtos/)中找到。
 
-### micro-ROS client
+### micro-ROS 客户端
 
-Once installed, the build system tool provides some utilities that can be used in order to prepare, build, flash and use a micro-ROS application. The micro-ROS build system is a four-step procedure. In the first step, the user can create a new micro-ROS application by configuring the target hardware and RTOS:
+安装后，构建系统工具提供了一些实用程序，可用于准备、构建、烧录和使用 micro-ROS 应用。micro-ROS 构建系统是一个四步过程。在第一步中，用户可以通过配置目标硬件和 RTOS 创建新的 micro-ROS 应用：
 
 ```bash
-# Create step
+# 创建步骤
 ros2 run micro_ros_setup create_firmware_ws.sh [RTOS] [HARDWARE BOARD]
 ```
 
-It is possible to obtain a list of the supported hardware by running the command without any argument. By doing so, it is possible to see that along with the RTOSes and hardware supported by micro-ROS this build system also provides with three extra options:
-- By using `zephyr` as RTOS and `host` as hardware name, it is possible to obtain a Zephyr RTOS image with your micro-ROS app that runs in your host computer.
-- By using just `host` as RTOS, micro-ROS will build a set of [micro-ROS demo applications](https://github.com/micro-ROS/micro-ROS-demos) natively in your host machine. These applications behave just like micro-ROS apps (using the same abstraction layers and middleware implementation) and allow the user to debug and test the applications on a PC.
-- By using `generate_lib` as RTOS it is possible to configure the build system for generating static libraries (`.a`) and a set of headers (`include`) that can be linked in any other external tool. This option requires a valid CMake toolchain.
+可以通过不带任何参数运行命令来获取支持的硬件列表。通过这样做，可以看到除了 micro-ROS 支持的 RTOS 和硬件外，此构建系统还提供三个额外选项：
+- 使用 `zephyr` 作为 RTOS 和 `host` 作为硬件名称，可以获取在主机上运行的带有 micro-ROS 应用的 Zephyr RTOS 镜像。
+- 仅使用 `host` 作为 RTOS，micro-ROS 将在主机上本地构建一组 [micro-ROS 演示应用](https://github.com/micro-ROS/micro-ROS-demos)。这些应用的行为就像 micro-ROS 应用一样（使用相同的抽象层和中间件实现），允许用户在 PC 上调试和测试应用。
+- 使用 `generate_lib` 作为 RTOS，可以为生成静态库 (`.a`) 和一组头文件 (`include`) 配置构建系统，这些可以链接到任何其他外部工具。此选项需要有效的 CMake 工具链。
 
-Once the build system has created the new firmware project, it is possible to configure it using:
+一旦构建系统创建了新的固件项目，就可以使用以下命令对其进行配置：
 
 ```bash
-# Configure step
+# 配置步骤
 ros2 run micro_ros_setup configure_firmware.sh [APP] [OPTIONS]
 ```
 
-By running this command without any argument, it will output a list of example applications valid for the selected RTOS.
-Common options available at this configuration step are:
-  - `--transport` or `-t`: `udp`, `serial` or any hardware specific transport label
-  - `--dev` or `-d`: agent string descriptor in a serial-like transport
-  - `--ip` or `-i`: agent IP in a network-like transport
-  - `--port` or `-p`: agent port in a network-like transport
+不带任何参数运行此命令将输出适用于所选 RTOS 的示例应用列表。
+此配置步骤的常用选项包括：
+  - `--transport` 或 `-t`：`udp`、`serial` 或任何硬件特定传输标签
+  - `--dev` 或 `-d`：类似串口的传输中的代理字符串描述符
+  - `--ip` 或 `-i`：网络类传输中的代理 IP
+  - `--port` 或 `-p`：网络类传输中的代理端口
 
-
-Finally, it is possible to build and flash a micro-ROS app using:
+最后，可以使用以下命令构建和烧录 micro-ROS 应用：
 
 ```bash
-# Build step
+# 构建步骤
 ros2 run micro_ros_setup build_firmware.sh
 
-# Flash step
+# 烧录步骤
 ros2 run micro_ros_setup flash_firmware.sh
 ```
 
-### micro-ROS agent
+### micro-ROS 代理
 
-The micro-ROS build system is also able to ease the compilation of the micro-ROS Agent in a ROS 2 workspace by using these commands:
+micro-ROS 构建系统还能够通过使用以下命令简化在 ROS 2 工作区中编译 micro-ROS 代理的过程：
 
 ```bash
-# Download micro-ROS-Agent packages
+# 下载 micro-ROS-Agent 包
 ros2 run micro_ros_setup create_agent_ws.sh
 ros2 run micro_ros_setup build_agent.sh
 source install/local_setup.bash
 ros2 run micro_ros_agent micro_ros_agent [OPTIONS]
 ```
 
-**Tip 1:** To learn use of the micro_ros_setup build system hands-on, please see the [core tutorials](https://micro-ros.github.io/docs/tutorials/core/first_application_rtos/).
+**提示 1：** 要了解 micro_ros_setup 构建系统的实际使用，请参阅[核心教程](https://micro-ros.github.io/docs/tutorials/core/first_application_rtos/)。
 
-**Tip 2 :** Remember that the micro-ROS Agent can be also be used with this simple Docker command: `docker run -it --rm -v /dev:/dev --privileged --net=host microros/micro-ros-agent:$ROS_DISTRO [OPTIONS]`
+**提示 2：** 请记住，micro-ROS 代理也可以使用此简单 Docker 命令使用：`docker run -it --rm -v /dev:/dev --privileged --net=host microros/micro-ros-agent:$ROS_DISTRO [OPTIONS]`

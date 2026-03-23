@@ -1,5 +1,5 @@
 ---
-title: Execution Management
+title: 执行管理
 permalink: /docs/concepts/client_library/execution_management/
 redirect_from:
   - /real-time_executor/
@@ -7,218 +7,219 @@ redirect_from:
 ---
 
 
-## Table of contents
+## 目录
 
-*   [Introduction](#introduction)
+*   [简介](#introduction)
 
-*   [Analysis of rclcpp standard Executor](#analysis-of-rclcpp-standard-executor)
-    * [Architecture](#architecture)
-    * [Scheduling Semantics](#scheduling-semantics)
+*   [rclcpp 标准执行器分析](#analysis-of-rclcpp-standard-executor)
+    * [架构](#architecture)
+    * [调度语义](#scheduling-semantics)
 
-*   [Analysis of processing patterns](#analysis-of-processing-patterns)
-    * [Sense-plan-act pipeline in robotics](#sense-plan-act-pipeline-in-robotics)
-    * [Synchronization of multiple rates](#synchronization-of-multiple-rates)
-    * [High-priority processing path](#high-priority-processing-path)
-    * [Real-time embedded applications](#real-time-embedded-applications)
-*   [rclc Executor](#rclc-executor)
-    * [Features](#features)
-      * [Trigger condition](#trigger-condition)
-      * [Sequential execution](#sequential-execution)
-      * [LET-Semantics](#let-semantics)
-      * [Multi-threading and scheduling configuration](#multi-threading-and-scheduling-configuration)
-    * [Executor API](#executor-api)
-      * [Configuration phase](#configuration-phase)
-      * [Running phase](#running-phase)
-    * [Examples](#examples)
-      * [Sense-plan-act pipeline in robotics example](#sense-plan-act-pipeline-in-robotics-example)
-      * [Synchronization of multiple rates example](#synchronization-of-multiple-rates-example)
-      * [High-priority processing path example](#high-priority-processing-path-example)
-      * [Real-time embedded applications example](#real-time-embedded-applications-example)
-      * [ROS 2 Executor Workshop Reference System](#ros-2-executor-workshop-reference-system)
-    * [Future work](#future-work)
-    * [Download](#download)
+*   [处理模式分析](#analysis-of-processing-patterns)
+    * [机器人技术中的感知-规划-动作流水线](#sense-plan-act-pipeline-in-robotics)
+    * [多速率同步](#synchronization-of-multiple-rates)
+    * [高优先级处理路径](#high-priority-processing-path)
+    * [实时嵌入式应用](#real-time-embedded-applications)
+*   [rclc 执行器](#rclc-executor)
+    * [特性](#features)
+      * [触发条件](#trigger-condition)
+      * [顺序执行](#sequential-execution)
+      * [LET 语义](#let-semantics)
+      * [多线程和调度配置](#multi-threading-and-scheduling-configuration)
+    * [执行器 API](#executor-api)
+      * [配置阶段](#configuration-phase)
+      * [运行阶段](#running-phase)
+    * [示例](#examples)
+      * [机器人感知-规划-动作流水线示例](#sense-plan-act-pipeline-in-robotics-example)
+      * [多速率同步示例](#synchronization-of-multiple-rates-example)
+      * [高优先级处理路径示例](#high-priority-processing-path-example)
+      * [实时嵌入式应用示例](#real-time-embedded-applications-example)
+      * [ROS 2 执行器研讨会参考系统](#ros-2-executor-workshop-reference-system)
+    * [未来工作](#future-work)
+    * [下载](#download)
 
-*   [Callback-group-level Executor](#callback-group-level-executor)
-    *   [API Changes](#api-changes)
-    *   [Test Bench](#test-bench)
+*   [回调组级执行器](#callback-group-level-executor)
+    *   [API 变更](#api-changes)
+    *   [测试平台](#test-bench)
 
-*   [Related Work](#related-work)
-    * [Fawkes Framework](#fawkes-framework)
-*   [References](#references)
-*   [Acknowledgments](#acknowledgments)
-
-
-## Introduction
-
-Predictable execution under given real-time constraints is a crucial requirement for many robotic applications. While the service-based paradigm of ROS allows a fast integration of many different functionalities, it does not provide sufficient control over the execution management. For example, there are no mechanisms to enforce a certain execution order of callbacks within a node. Also the execution order of multiple nodes is essential for control applications in mobile robotics. Cause-effect-chains comprising of sensor acquisition, evaluation of data and actuation control should be mapped to ROS nodes executed in this order, however there are no explicit mechanisms to enforce it. Furthermore, when data recordings collected in field tests as ROS-bags are re-played, then the results are often surprisingly different due to non-determinism of process scheduling.
-
-Manually setting up a particular execution order of subscriptions and publishing topics as well as defining use-case specific priorities of the corresponding Linux processes is always possible. However, this approach is error-prone, difficult to extend and requires an in-depth knowledge of the deployed ROS 2 packages in the system.
-
-Therefore the goal of the Executor in micro-ROS is to support roboticists with practical and easy-to-use real-time mechanisms which provide solutions for:
-- Deterministic execution
-- Real-time guarantees
-- Integration of real-time and non real-time functionalities on one platform
-- Specific support for RTOS and microcontrollers
+*   [相关工作](#related-work)
+    * [Fawkes 框架](#fawkes-framework)
+*   [参考文献](#references)
+*   [致谢](#acknowledgments)
 
 
-In ROS 1 a network thread is responsible for receiving all messages and putting them into a FIFO queue (in roscpp). That is, all callbacks were called in a FIFO manner, without any execution management. With the introduction of DDS (data distribution service) in ROS 2, the messages are buffered in DDS. In ROS 2, an Executor concept was introduced to support execution management. At the rcl-layer, a _wait-set_ is configured with handles to be received and in a second step, the handles are taken from the DDS-queue. A handle is a generic term defined in rcl-layer for timers, subscriptions, services, clients and guard conditions.
+## 简介
 
-The standard implementation of the ROS 2 Executor for the C++ API (rclcpp) has, however, certain unusual features, like precedence of timers over all other DDS handles, non-preemptive round-robin scheduling for non-timer handles and considering only one input data for each handle (even if multiple could be available). These features have the consequence, that in certain situations the standard rclcpp Executor is not deterministic and it makes guaranteeing real-time requirements very hard [[CB2019](#CB2019)]. We have not looked at the ROS 2 Executor implementation for Python Frontend (rclpy) because we consider a micro-controllers platform, on which typically C or C++ appliations will run.
+在给定的实时约束下实现可预测的执行是许多机器人应用的关键要求。虽然基于服务的 ROS 范式允许快速集成许多不同的功能，但它对执行管理的控制不足。例如，没有机制来强制执行节点内回调的特定执行顺序。多个节点执行顺序对于移动机器人中的控制应用也至关重要。包含传感器采集、数据评估和驱动控制的因果链应该按此顺序映射到 ROS 节点执行，然而没有明确的机制来强制执行这些顺序。此外，当回放现场测试中以 ROS-bag 形式收集的数据时，由于进程调度的非确定性，结果往往出奇地不同。
 
-Given the goals for a Real-Time Executor and the limitations of the ROS 2 standard rclcpp Executor, the challenges are:
-- to develop an adequate and well-defined scheduling mechanisms for the ROS 2 framework and the real-time operating system (RTOS)
-- to define an easy-to-use interface for ROS developers
-- to model requirements (like latencies, determinism in subsystems)
-- mapping of ROS 2 framework and operating system schedulers (semi-automated and optimized mapping is desired as well as generic, well-understood framework mechanisms)
+手动设置订阅和发布主题的特定执行顺序，以及定义相应 Linux 进程的特定用例优先级始终是可能的。然而，这种方法容易出错，难以扩展，并且需要深入了解系统中部署的 ROS 2 包。
 
-Our approach is to provide a real-time-capable Executor for the rcl+rclc layer (as described in section [Introduction to Client Library](../).) in the C programming language.
+因此，micro-ROS 中执行器的目标是帮助机器人技术专家使用实用且易于使用的实时机制，提供以下解决方案：
+- 确定性执行
+- 实时保证
+- 在一个平台上集成实时和非实时功能
+- 对 RTOS 和微控制器的专门支持
 
-As the first step, we propose the rclc Executor for the rcl-layer in C programming language with several new features to support real-time and deterministic execution: It supports 1.) user-defined static sequential execution, 2) conditional execution semantics, 3) multi-threaded execution with scheduling configuration, and 4) logical execution semantics (LET). Sequential execution refers to the runtime behavior, that all callbacks are executed in a pre-defined order independent of the arrival time of messages. Conditional execution is available with a trigger condition which enables typical processing patterns in robotics (which are analyzed in detail in section [Analysis of processing patterns](#analysis-of-processing-patterns). Configuration of scheduling parameters for multi-threaded application accomplishes prioritized execution. The logical execution time concept (LET) provides data synchronization for fixed periodic task scheduling of embedded applications. 
+在 ROS 1 中，网络线程负责接收所有消息并将它们放入 FIFO 队列（在 roscpp 中）。也就是说，所有回调都以 FIFO 方式调用，没有任何执行管理。随着 ROS 2 中 DDS（数据分发服务）的引入，消息被缓冲在 DDS 中。在 ROS 2 中，引入了执行器概念来支持执行管理。在 rcl 层，配置了一个 _wait-set_，其中包含要接收的句柄，然后在第二步从 DDS 队列中获取这些句柄。句柄是 rcl 层为定时器、订阅、服务、客户端和守护条件定义的通用术语。
 
-Beyond the advanced execution management mechanisms for micro-ROS, we also contributed to improving and extending the Executor concept in rclcpp for standard ROS 2: the callback group-level Executor. It is not a new Executor but rather a refinement of the ROS 2 Executor API allowing to prioritize a group of callbacks which is not possible with the ROS 2 default Executor in its current Iron release.
+然而，ROS 2 执行器的标准 C++ API 实现（rclcpp）具有某些不寻常的特性，例如定时器优先于所有其他 DDS 句柄、非定时器句柄的非抢占式轮询调度，以及仅考虑每个句柄的一个输入数据（即使可能有多个可用）。这些特性的结果是，在某些情况下，标准 rclcpp 执行器不是确定性的，并且使其难以保证实时要求 [[CB2019](#CB2019)]。我们没有研究 Python 前端（rclpy）的 ROS 2 执行器实现，因为我们认为在微控制器平台上，通常会运行 C 或 C++ 应用程序。
 
+鉴于实时执行器的目标和 ROS 2 标准 rclcpp 执行器的局限性，挑战在于：
+- 为 ROS 2 框架和实时操作系统（RTOS）开发适当的、定义明确的调度机制
+- 为 ROS 开发人员定义易于使用的接口
+- 对需求进行建模（如延迟、子系统中的确定性）
+- ROS 2 框架和操作系统调度器的映射（半自动和优化的映射以及通用的、众所周知的框架机制也是可取的）
 
-## Analysis of rclcpp standard Executor
+我们的方法是为 rcl+rclc 层（如 [客户端库简介](../) 中所述）提供一个支持实时功能的 C 语言执行器。
 
-ROS 2 allows to bundle multiple nodes in one operating system process. To coordinate the execution of the callbacks of the nodes of a process, the Executor concept was introduced in rclcpp (and also in rclpy).
+作为第一步，我们为 C 编程语言中的 rcl 层提出了 rclc 执行器，它具有支持实时和确定性执行的新特性：它支持 1.）用户定义的静态顺序执行，2.）条件执行语义，3.）具有调度配置的多线程执行，以及 4.）逻辑执行时间（LET）语义。顺序执行指的是运行时行为，即所有回调都按预定义顺序执行，与消息到达时间无关。可通过触发条件获得条件执行，该触发条件支持机器人技术中的典型处理模式（在 [处理模式分析](#analysis-of-processing-patterns) 部分中有详细分析）。多线程应用程序的调度参数配置实现优先级执行。逻辑执行时间概念（LET）为嵌入式应用的固定周期性任务调度提供数据同步。
 
-The ROS 2 design defines one Executor (instance of [rclcpp::executor::Executor](https://github.com/ros2/rclcpp/blob/master/rclcpp/include/rclcpp/executor.hpp)) per process, which is typically created either in a custom main function or by the launch system. The Executor coordinates the execution of all callbacks issued by these nodes by checking for available work (timers, services, messages, subscriptions, etc.) from the DDS queue and dispatching it to one or more threads, implemented in [SingleThreadedExecutor](https://github.com/ros2/rclcpp/blob/master/rclcpp/include/rclcpp/executors/single_threaded_executor.hpp) and [MultiThreadedExecutor](https://github.com/ros2/rclcpp/blob/master/rclcpp/include/rclcpp/executors/multi_threaded_executor.hpp), respectively.
+除了 micro-ROS 的高级执行管理机制外，我们还为标准 ROS 2 中的 rclcpp 执行器概念做出了贡献：回调组级执行器。它不是一个新的执行器，而是对 ROS 2 执行器 API 的改进，允许对回调组进行优先级排序，而这在当前 Iron 版本中的 ROS 2 默认执行器中是不可能的。
 
-The dispatching mechanism resembles the ROS 1 spin thread behavior: the Executor looks up the wait sets, which notifies it of any pending callback in the DDS queue. If there are multiple pending callbacks, the ROS 2 Executor executes them in the order as they were registered at the Executor.
+## rclcpp 标准执行器分析
 
-### Architecture
+ROS 2 允许将多个节点捆绑在一个操作系统进程中。rclcpp（以及 rclpy）中引入了执行器概念来协调进程中节点回调的执行。
 
-The following diagram depicts the relevant classes of the standard ROS 2 Executor implementation:
+ROS 2 设计为每个进程定义一个执行器（[rclcpp::executor::Executor](https://github.com/ros2/rclcpp/blob/master/rclcpp/include/rclcpp/executor.hpp) 的实例），它通常在自定义 main 函数或启动系统中创建。执行器通过检查 DDS 队列中是否有可用的工作（定时器、服务、消息、订阅等）并将它们分派到一个或多个线程来协调这些节点发出的所有回调的实现，分别在 [SingleThreadedExecutor](https://github.com/ros2/rclcpp/blob/master/rclcpp/include/rclcpp/executors/single_threaded_executor.hpp) 和 [MultiThreadedExecutor](https://github.com/ros2/rclcpp/blob/master/rclcpp/include/rclcpp/executors/multi_threaded_executor.hpp) 中实现。
+
+调度机制类似于 ROS 1 的自旋线程行为：执行器查找等待集，等待集通知它 DDS 队列中有任何待处理的回调。如果有多个待处理的回调，ROS 2 执行器按在执行器注册时的顺序执行它们。
+
+### 架构
+
+下图描述了标准 ROS 2 执行器实现的相关类：
 
 <center>
 <img src="png/executor_class_diagram.png" alt="ROS 2 Executor class diagram" width="100%" />
 </center>
 
-Note that an Executor instance maintains weak pointers to the NodeBaseInterfaces of the nodes only. Therefore, nodes can be destroyed safely, without notifying the Executor.
+请注意，执行器实例仅维护指向节点 NodeBaseInterfaces 的弱指针。因此，可以安全地销毁节点，而无需通知执行器。
 
-Also, the Executor does not maintain an explicit callback queue, but relies on the queue mechanism of the underlying DDS implementation as illustrated in the following sequence diagram:
+此外，执行器不维护显式的回调队列，而是依赖于底层 DDS 实现的队列机制，如以下序列图所示：
 
 <center>
 <img src="png/executor_to_dds_sequence_diagram.png" alt="Call sequence from executor to DDS" width="100%" />
 </center>
 
-The Executor concept, however, does not provide means for prioritization or categorization of the incoming callback calls. Moreover, it does not leverage the real-time characteristics of the underlying operating-system scheduler to have finer control on the order of executions. The overall implication of this behavior is that time-critical callbacks could suffer possible deadline misses and a degraded performance since they are serviced later than non-critical callbacks. Additionally, due to the FIFO mechanism, it is difficult to determine usable bounds on the worst-case latency that each callback execution may incur.
+然而，执行器概念没有提供对传入回调调用进行优先级排序或分类的手段。此外，它也没有利用底层操作系统调度器的实时特性来更好地控制执行顺序。这种行为的整体含义是，时间关键的回调可能会遭受可能的截止时间错失和性能下降，因为它们的服务晚于非关键回调。此外，由于 FIFO 机制，很难确定每个回调执行可能产生的最坏情况延迟的可使用界限。
 
-### Scheduling Semantics
+### 调度语义
 
-In a recent paper [[CB2019](#CB2019)], the rclcpp Executor has been analyzed in detail and a response time analysis of cause-effect chains has been proposed under reservation-based scheduling. The Executor distinguishes four categories of callbacks: _timers_, which are triggered by system-level timers, _subscribers_, which are triggered by new messages on a subscribed topic, _services_, which are triggered by service requests, and _clients_, which are triggered by responses to service requests. The Executor is responsible for taking messages from the input queues of the DDS layer and executing the corresponding callback. Since it executes callbacks to completion, it is a non-preemptive scheduler, However it does not consider all ready tasks for execution, but only a snapshot, called readySet. This readySet is updated when the Executor is idle and in this step it interacts with the DDS layer updating the set of ready tasks. Then for every type of task, there are dedicated queues (timers, subscriptions, services, clients) which are processed sequentially. The following undesired properties were pointed out:
+在最近的一篇论文 [[CB2019](#CB2019)] 中，rclcpp 执行器得到了详细分析，并在基于预留的调度下提出了因果链的响应时间分析。执行器区分四类回调：_定时器_，由系统级定时器触发；_订阅者_，由订阅主题上的新消息触发；_服务_，由服务请求触发；以及_客户端_，由服务请求的响应触发。执行器负责从 DDS 层的输入队列中取出消息并执行相应的回调。由于它执行回调直到完成，因此它是一个非抢占式调度器，但它不考虑所有准备好的任务，而只考虑一个称为 readySet 的快照。当执行器空闲时更新此 readySet，在这一步它与 DDS 层交互以更新准备好的任务集。然后，对于每种类型的任务，有专门的队列（定时器、订阅、服务、客户端）按顺序处理。指出了以下不良特性：
 
-* Timers have the highest priority. The Executor processes _timers_ always first.  This can lead to the intrinsic effect, that in overload situations messages from the DDS queue are not processed.
-* Non-preemptive round-robin scheduling of non-timer handles. Messages arriving during the processing of the readySet are not considered until the next update, which depends on the execution time of all remaining callbacks. This leads to priority inversion, as lower-priority callbacks may implicitly block higher-priority callbacks by prolonging the current processing of the readySet.
-* Only one message per handle is considered. The readySet contains only one task instance, For example, even if multiple messages of the same topic are available, only one instance is processed until the Executor is idle again and the readySet is updated from the DDS layer. This aggravates priority inversion, as a backlogged callback might have to wait for multiple processing of readySets until it is considered for scheduling. This means that non-timer callback instances might be blocked by multiple instances of the same lower-priority callback.
+* 定时器具有最高优先级。执行器始终首先处理 _定时器_。这可能导致在过载情况下 DDS 队列中的消息无法处理的固有效果。
+* 非定时器句柄的非抢占式轮询调度。在处理 readySet 期间到达的消息不会被考虑，直到下一次更新，这取决于所有剩余回调的执行时间。这会导致优先级反转，因为低优先级回调可能会通过延长 readySet 的当前处理来隐式阻塞更高优先级的回调。
+* 每个句柄只考虑一条消息。readySet 只包含一个任务实例。例如，即使同一主题有多条消息可用，也只会处理一个实例，直到执行器再次空闲并从 DDS 层更新 readySet。这会加剧优先级反转，因为积压的回调可能需要多次处理 readySet 才能被考虑进行调度。这意味着非定时器回调实例可能被同一低优先级回调的多个实例阻塞。
 
-Due to these findings, the authors present an alternative approach to provide determinism and to apply well-known schedulability analyses to a ROS 2 systems. A response time analysis is described under reservation-based scheduling.
+基于这些发现，作者提出了一种替代方法来提供确定性，并将众所周知的可调度性分析应用于 ROS 2 系统。在基于预留的调度下描述了响应时间分析。
 
-## Analysis of processing patterns
-The development of an execution management mechanism for micro-ROS is based on an analysis of processing patterns commonly used in robotics and embedded systems. First, typical processing patterns in mobile robotics are presented which are used to implement deterministic behavior. Then, the processing patterns in the real-time embedded systems are analyzed, in which, as a main difference, the time-triggered paradigm is applied to accomplish real-time behavior. 
+## 处理模式分析
 
-### Sense-plan-act pipeline in robotics
-Now we describe common software design patterns which are used in mobile robotics to achieve deterministic behavior. For each design pattern we describe the concept and the derived requirements for a deterministic Executor.
+为 micro-ROS 开发执行管理机制的基础是对机器人和嵌入式系统中常用的处理模式进行分析。首先，介绍移动机器人中用于实现确定性行为的典型处理模式。然后，分析实时嵌入式系统中的处理模式，主要区别在于应用时间触发范式来实现实时行为。
 
-**Concept:**
+### 机器人技术中的感知-规划-动作流水线
 
-A common design paradigm in mobile robotics is a control loop, consisting of several phases: A sensing phase to aquire sensor data, a plan phase for localization and path planning and an actuation-phase to steer the mobile robot. Of course, more phases are possible, here these three phases shall serve as an example. Such a processing pipeline is shown in Figure 1.
+现在我们描述在移动机器人中用于实现确定性行为的常见软件设计模式。对于每种设计模式，我们描述概念以及为确定性执行器派生的要求。
+
+**概念：**
+
+移动机器人中常见的控制范式是一个控制循环，由几个阶段组成：一个感测阶段获取传感器数据，一个规划阶段进行定位和路径规划，以及一个驱动阶段来控制移动机器人。当然，可能有更多的阶段，这里这三个阶段作为示例。这样的处理流水线如图1所示。
 
 <center>
 <img src="png/sensePlanActScheme.png" alt="Sense Plan Act Pipeline" width="60%"/>
 </center>
 <center>
-Figure 1: Multiple sensors driving a Sense-Plan-Act pipeline.
+图1：多个传感器驱动的感知-规划-动作流水线。
 </center>
 
-Typically multiple sensors are used to perceive the environment. For example an IMU and a laser scanner. The quality of localization algorithms highly depend on how old such sensor data is when it is processed. Ideally the latest data of all sensors should be processed. One way to achive this is to execute first all sensor drivers in the sense-phase and then process all algorithms in the plan-phase.
+通常使用多个传感器来感知环境。例如 IMU 和激光扫描仪。定位算法的质量很大程度上取决于处理这些传感器数据时的数据"年龄"。理想情况下，应该处理所有传感器的最新数据。实现这一目标的一种方法是在感知阶段首先执行所有传感器驱动，然后在规划阶段处理所有算法。
 
-Currently, such a processing order cannot be defined with the default Executor of rclcpp. One could in principle design a data-driven pipeline, however if e.g. the Laser scan is needed by some other callback in the sense-phase as well as in the plan-phase, the processing order of these subscribers is arbitrary.
+目前，无法使用 rclcpp 的默认执行器定义这样的处理顺序。原则上可以设计数据驱动的流水线，但是如果激光扫描需要在感知阶段以及规划阶段的某些其他回调中使用，这些订阅的处理顺序是任意的。
 
-For this sense-plan-act pattern, we could define one executor for each phase. The plan-phase would be triggered only when all callbacks in the sense-phase have finished.
+对于这种感知-规划-动作模式，我们可以为每个阶段定义一个执行器。规划阶段仅在感知阶段的所有回调完成后才被触发。
 
-**Derived requirements:**
-- triggered execution
+**派生要求：**
+- 触发执行
 
-### Synchronization of multiple rates
+### 多速率同步
 
-**Concept:**
+**概念：**
 
-Often multiple sensors are being used to sense the environment for mobile robotics. While an IMU sensor provides data samples at a very high rate (e.g., 500 Hz), laser scans are availabe at a much slower frequency (e.g. 10Hz) determined by the revolution time. Then the challenge is, how to deterministically fuse sensor data with different frequencies. This problem is depicted in Figure 2.
+通常，在移动机器人中会使用多个传感器来感知环境。虽然 IMU 传感器以非常高的速率（例如 500 Hz）提供数据样本，但激光扫描可用的频率要慢得多（例如 10 Hz），由旋转时间决定。那么，挑战在于如何确定性地融合不同频率的传感器数据。此问题如图 2 所示。
 
 <center>
 <img src="png/sensorFusion_01.png" alt="Sychronization of multiple rates" width="30%" />
 </center>
 <center>
-Figure 2: How to deterministically process multi-frequent sensor data.
+图2：如何确定性地处理多频率传感器数据。
 </center>
 
-Due to scheduling effects, the callback for evaluating the laser scan might be called just before or just after an IMU data is received. One way to tackle this is to write additional synchronization code inside the application. Obviously, this is a cumbersome and not-portable solution.
+由于调度效应，评估激光扫描的回调可能在 IMU 数据到达之前或之后被调用。解决这个问题的一种方法是在应用程序内编写额外的同步代码。显然，这是一个繁琐且不可移植的解决方案。
 
-An Alternative would be to evalute the IMU sample and the laser scan by synchronizing their frequency. For example by processing always 50 IMU samples with one laser scan. This approach is shown in Figure 3. A pre-processing callback aggregates the IMU samples and sends an aggregated message with 50 samples at 10Hz rate. Now both messages have the same frequency. With a trigger condition, which fires when both messages are available, the sensor fusion algorithm can expect always synchronized input data.
+另一种方法是评估 IMU 样本和激光扫描，通过同步它们的频率。例如，始终处理 50 个 IMU 样本与一次激光扫描。如图 3 所示这种方法。预处理回调聚合 IMU 样本，并以 10 Hz 的速率发送包含 50 个样本的聚合消息。现在两条消息具有相同的频率。通过一个触发条件（当两条消息都可用时触发），传感器融合算法可以期望始终同步的输入数据。
 
 <center>
 <img src="png/sensorFusion_02.png" alt="Sychnronization with a trigger" width="40%" />
 </center>
 <center>
-Figure 3: Synchronization of multiple input data with a trigger.
+图3：使用触发器同步多个输入数据。
 </center>
 
-In ROS 2, this is currently not possible to be modeled because of the lack of a trigger concept in the Executors of rclcpp and rclpy. Message filters could be used to synchronize input data based on the timestamp in the header, but this is only available in rclcpp (and not in rcl). Further more, it would be more efficient to have such a trigger concept directly in the Executor.
+在 ROS 2 中，由于 rclcpp 和 rclpy 的执行器缺乏触发概念，目前无法对此进行建模。消息过滤器可用于根据标题中的时间戳同步输入数据，但这仅在 rclcpp 中可用（而不是在 rcl 中）。此外，如果在执行器中直接有这样一个触发概念会更有效。
 
-Another idea would be to actively request for IMU data only when a laser scan is received. This concept is shown in Figure 4. Upon arrival of a laser scan mesage, first, a message with aggregated IMU samples is requested. Then, the laser scan is processed and later the sensor fusion algorithm. An Executor, which would support sequential execution of callbacks, could realize this idea.
+另一个想法是仅在收到激光扫描时主动请求 IMU 数据。这个概念如图 4 所示。收到激光扫描消息后，首先请求包含聚合 IMU 样本的消息。然后处理激光扫描，稍后处理传感器融合算法。支持回调顺序执行执行器可以实现这个想法。
 
 <center>
 <img src="png/sensorFusion_03.png" alt="Sychronization with sequence" width="30%" />
 </center>
 <center>
-Figure 4: Synchronization with sequential processing.
+图4：顺序处理同步。
 </center>
 
-**Derived requirements:**
-- triggered execution
-- sequential procesing of callbacks
+**派生要求：**
+- 触发执行
+- 回调的顺序处理
 
-### High-priority processing path
-**Concept**
-Often a robot has to fullfill several activities at the same time. For example following a path and avoiding obstacles. While path following is a permanent activity, obstacle avoidance is trigged by the environment and should be immediately reacted upon. Therefore one would like to specify priorities to activities. This is depicted in Figure 5:
+### 高优先级处理路径
+**概念**
+通常机器人必须同时完成多项活动。例如跟随路径和避障。跟随路径是一项永久性活动，而避障由环境触发，应该立即做出反应。因此，人们希望为活动指定优先级。如图 5 所示：
 
 <center>
 <img src="png/highPriorityPath.png" alt="HighPriorityPath" width="50%" />
 </center>
 <center>
-Figure 5: Managing high priority path with sequential order.
+图5：使用顺序顺序管理高优先级路径。
 </center>
 
-Assuming a simplified control loop with the activities sense-plan-act, the obstacle avoidance, which might temporarily stop the robot, should be processed before the planning phase. In this example we assume that these activites are processed in one thread.
+假设一个简化的控制循环包含感知-规划-动作活动，可能会暂时停止机器人的避障应该在规划阶段之前处理。在这个例子中，我们假设这些活动在一个线程中处理。
 
-**Derived requirements:**
-- sequential processing of callbacks
+**派生要求：**
+- 回调的顺序处理
 
 
-### Real-time embedded applications
-In embedded systems, real-time behavior is approached by using the time-triggered paradigm, which means that the processes are periodically activated. Processes can be assigned priorities to allow pre-emptions. Figure 6 shows an example, in which three processes with fixed periods are shown. The middle and lower process are preempted multiple times depicted with empty dashed boxes.
+### 实时嵌入式应用
+
+在嵌入式系统中，实时行为是通过使用时间触发范式来实现的，这意味着进程被周期性激活。进程可以分配优先级以允许抢占。图 6 显示了一个示例，其中显示了三个具有固定周期的进程。中层和下层进程被多次抢占，用空心虚线框表示。
 
 <center>
 <img src="png/scheduling_01.png" alt="Schedule with fixed periods" width="30%"/>
 </center>
 <center>
-Figure 6: Fixed periodic preemptive scheduling.
+图6：固定周期抢占式调度。
 </center>
 
-To each process one or multiple tasks can be assigned, as shown in Figure 7. These tasks are executed sequentially, which is often called cooperative scheduling.
+每个进程可以分配一个或多个任务，如图 7 所示。这些任务顺序执行，这通常称为协作调度。
 
 <center>
 <img src="png/scheduling_02.png" alt="Schedule with fixed periods" width="30%"/>
 </center>
 <center>
-Figure 7: Processes with sequentially executed tasks.
+图7：顺序执行任务的进程。
 </center>
 
-While there are different ways to assign priorities to a given number of processes,
-the rate-monotonic scheduling assignment, in which processes with a shorter period have a higher priority, has been shown optimal if the processor utilization is less than 69% [[LL1973](#LL1973)].
+虽然有多种方法可以为给定数量的进程分配优先级，
+但是已证明速率单调调度分配（周期较短的进程具有较高优先级）在处理器利用率低于 69% 时是最优的 [[LL1973](#LL1973)]。
 
- In the last decades many different scheduling approaches have been presented; however fixed-periodic preemptive scheduling is still widely used in embedded real-time systems [[KZH2015](#KZH2015)]. This becomes also obvious, when looking at the features of current operating systems. Like Linux, real-time operating systems, such as NuttX, Zephyr, FreeRTOS, QNX etc., support fixed-periodic preemptive scheduling and the assignment of priorities, which makes the time-triggered paradigm the dominant design principle in this domain.
+在过去的几十年中提出了许多不同的调度方法；然而，固定周期抢占式调度仍在嵌入式实时系统中广泛使用 [[KZH2015](#KZH2015)]。这在查看当前操作系统的特性时也很明显。像 Linux 一样，实时操作系统，如 NuttX、Zephyr、FreeRTOS、QNX 等，支持固定周期抢占式调度和优先级分配，这使得时间触发范式成为该领域的主导设计原则。
 
 However, data consistency is often an issue when preemptive scheduling is used and if data is being shared across multiple processes via global variables. Due to scheduling effects and varying execution times of processes, writing and reading these variables could occur sometimes sooner or later. This results in a latency jitter of update times (the timepoint at which a variable change becomes visible to other processes). Race conditions can occur when multiple processes access a variable at the same time. So to solve this problem, the concept of logical-execution time (LET) was introduced in [[HHK2001](#HHK2001)], in which communication of data occurs only at pre-defined periodic time instances: Reading data only at the beginning of the period and writing data only at the end of the period. The cost of an additional latency delay is traded for data consistency and reduced jitter. This concept has also recently been applied to automotive applications[[NSP2018](#NSP2018)].
 

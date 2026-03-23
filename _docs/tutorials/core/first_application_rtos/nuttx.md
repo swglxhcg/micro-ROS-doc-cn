@@ -1,5 +1,5 @@
 ---
-title: First micro-ROS Application on NuttX
+title: NuttX 上的第一个 micro-ROS 应用
 permalink: /docs/tutorials/core/first_application_rtos/nuttx/
 redirect_from:
   - /docs/tutorials/advanced/nuttx/nuttx_getting_started/
@@ -7,172 +7,164 @@ redirect_from:
 
 <img src="https://img.shields.io/badge/Tested_on-Humble-green" style="display:inline"/>
 
-In this tutorial, you'll learn the use of micro-ROS with NuttX by testing a Ping Pong application.
+在本教程中，您将通过测试 Ping Pong 应用程序来学习在 NuttX 上使用 micro-ROS。
 {% include first_application_common/target_hardware.md %}
-* [USB-to-Serial Cable Female](https://www.olimex.com/Products/Components/Cables/USB-Serial-Cable/USB-SERIAL-F/)
-* [USB-to-mini-USB cable](https://www.olimex.com/Products/Components/Cables/CABLE-USB-A-MINI-1.8M/)
+* [USB转串口线 母头](https://www.olimex.com/Products/Components/Cables/USB-Serial-Cable/USB-SERIAL-F/)
+* [USB转Mini-USB线](https://www.olimex.com/Products/Components/Cables/CABLE-USB-A-MINI-1.8M/)
 
 {% include first_application_common/build_system.md %}
 
 ```bash
-# Create step
+# 创建步骤
 ros2 run micro_ros_setup create_firmware_ws.sh nuttx olimex-stm32-e407
 ```
 
-Once the command is executed, a folder named `firmware` must be present in your workspace.
+执行此命令后，您的工作空间中必须存在一个名为 `firmware` 的文件夹。
 
-This step is in charge, among other things, of downloading a set of micro-ROS apps for the specific platform you are
-addressing.
-In the case of NuttX, these are located [here](https://github.com/micro-ROS/nuttx_apps/tree/foxy/examples).
-Each app is represented by a folder containing the following files:
+此步骤负责（除其他事项外）下载针对您要处理的特定平台的 micro-ROS 应用程序集。
+对于 NuttX，这些应用程序位于[此处](https://github.com/micro-ROS/nuttx_apps/tree/foxy/examples)。
+每个应用程序由一个包含以下文件的文件夹表示：
 
-* `app.c`: This file contains the logic of the application.
-* `Kconfig`: This file contains the NuttX Kconfig configuration.
-* `Make.defs`: This file contains the	NuttX build system definitions.
-* `Makefile`: This file contains the NuttX specific app build script.
+* `app.c`：此文件包含应用程序的逻辑。
+* `Kconfig`：此文件包含 NuttX Kconfig 配置。
+* `Make.defs`：此文件包含 NuttX 构建系统定义。
+* `Makefile`：此文件包含特定于 NuttX 的应用程序构建脚本。
 
-## Configuring the firmware
+## 配置固件
 
-The configuration step will set up the main micro-ROS options and select the desired application.
-It can be executed with the following command:
+配置步骤将设置主要的 micro-ROS 选项并选择所需的应用程序。
+可以使用以下命令执行：
 
 ```bash
-# Configure step
+# 配置步骤
 ros2 run micro_ros_setup configure_firmware.sh [APP] [OPTIONS]
 ```
 
-In this tutorial, we will use a Serial transport and focus on the out-of-the-box `uros_pingpong`
-application located [here](https://github.com/micro-ROS/nuttx_apps/tree/foxy/examples/uros_pingpong).
-To execute this application with the chosen transport, run the configuration command above by specifying the `[APP]` parameter as below:
+在本教程中，我们将使用串行传输，并重点介绍位于[此处](https://github.com/micro-ROS/nuttx_apps/tree/foxy/examples/uros_pingpong)的开箱即用的 `uros_pingpong` 应用程序。
+要使用所选传输执行此应用程序，请通过如下指定 `[APP]` 参数来运行上述配置命令：
 
 ```bash
-# Configure step with ping_pong app and serial-usb transport
+# 使用 ping_pong 应用程序和串口-USB 传输进行配置步骤
 ros2 run micro_ros_setup configure_firmware.sh pingpong
 ```
 
-and with no `[OPTIONS]` parameter.
+且不带 `[OPTIONS]` 参数。
 
-A pre-configured ethernet example is also available:
+还提供了一个预配置的以太网示例：
 ```bash
-# Configure step with ping_pong app and serial-usb transport
+# 使用 ping_pong 应用程序和串口-USB 传输进行配置步骤
 ros2 run micro_ros_setup configure_firmware.sh pingpong-eth
 ```
 
-To proceed with the configuration, clone the following NuttX tools repo:
+要继续进行配置，请克隆以下 NuttX 工具仓库：
 
 ```bash
-# Download the tools necessary to work with NuttX
+# 下载使用 NuttX 所需的工具
 git clone https://bitbucket.org/nuttx/tools.git firmware/tools
 ```
 
-and then install the required `kconfig-frontends`:
+然后安装所需的 `kconfig-frontends`：
 
 ```bash
 pushd firmware/tools/kconfig-frontends
 ./configure
 make
 
-# if the make command fails, type: autoreconf -f -i , and then rerun the make command.
+# 如果 make 命令失败，输入：autoreconf -f -i ，然后重新运行 make 命令。
 
 sudo make install
 sudo ldconfig
 popd
 ```
 
-Now we have two options to configure our micro-ROS transport:
+现在我们有两种配置 micro-ROS 传输的方式：
 
-- Interactive NuttX menu config
-  * Launch the configuration menu:
+- 交互式 NuttX 菜单配置
+  * 启动配置菜单：
 
     ```bash
     cd firmware/NuttX
     make menuconfig
     ```
 
-  * You can check that the application has been selected under `Application Configuration ---> Examples ---> micro-ROS Ping Pong`.
-  * The transport is also pre-configured under the `Application Configuration ---> micro-ROS ---> Transport` option.
-  * To configure the transport, use the `IP address of the agent` and `Port number of the agent` options for UDP and `Serial port to use` for the serial example.
-  * To save the changes, navigate to the bottom menu with the left and right arrows, and click on the `Save` button.
-  * You will be asked if you want to save your new `.config` configuration, and you need to click `Ok`, and then `Exit`.
-  * Push three times the `Esc` key to close the menu and go back to `microros_ws` with:
+  * 您可以在 `Application Configuration ---> Examples ---> micro-ROS Ping Pong` 下检查是否已选择该应用程序。
+  * 传输也已预配置在 `Application Configuration ---> micro-ROS ---> Transport` 选项下。
+  * 要配置传输，对于 UDP 使用 `IP address of the agent` 和 `Port number of the agent` 选项，对于串行示例使用 `Serial port to use`。
+  * 要保存更改，使用左右箭头导航到底部菜单，然后点击 `Save` 按钮。
+  * 系统会询问您是否要保存新的 `.config` 配置，您需要点击 `Ok`，然后点击 `Exit`。
+  * 按三次 `Esc` 键关闭菜单并返回 `microros_ws`：
 
       ```bash
       cd ../..
       ```
 
-- `kconfig-tweak` console commands:
-  * Go to Nuttx configuration path:
+- `kconfig-tweak` 控制台命令：
+  * 进入 Nuttx 配置路径：
 
     ```bash
     cd firmware/NuttX
     ```
 
-  * UDP transport configuration:
+  * UDP 传输配置：
     ```bash
     kconfig-tweak --set-val CONFIG_UROS_AGENT_IP "127.0.0.1"
     kconfig-tweak --set-val CONFIG_UROS_AGENT_PORT 8888
     ```
 
-  * Serial transport configuration:
+  * 串行传输配置：
     ```bash
     kconfig-tweak --set-val CONFIG_UROS_SERIAL_PORT "/dev/ttyS0"
     ```
 
-You can check the complete content of the `uros_pingpong` app
-[here](https://github.com/micro-ROS/nuttx_apps/tree/foxy/examples/uros_pingpong).
+您可以在[此处](https://github.com/micro-ROS/nuttx_apps/tree/foxy/examples/uros_pingpong)查看 `uros_pingpong` 应用程序的完整内容。
 
 {% include first_application_common/pingpong_logic.md %}
 
-The contents of the FreeRTOS app specific files can be found here:
-[app.c](https://github.com/micro-ROS/nuttx_apps/blob/foxy/examples/uros_pingpong/app.c),
-[Kconfig](https://github.com/micro-ROS/nuttx_apps/blob/foxy/examples/uros_pingpong/Kconfig),
-[Make.defs](https://github.com/micro-ROS/nuttx_apps/blob/foxy/examples/uros_pingpong/Make.defs) and
-[Makefile](https://github.com/micro-ROS/nuttx_apps/blob/foxy/examples/uros_pingpong/Makefile).
-A thorough review of these files is illustrative of how to create a micro-ROS app in this RTOS.
+FreeRTOS 应用程序特定文件的内容可以在以下位置找到：
+[app.c](https://github.com/micro-ROS/nuttx_apps/blob/foxy/examples/uros_pingpong/app.c)、
+[Kconfig](https://github.com/micro-ROS/nuttx_apps/blob/foxy/examples/uros_pingpong/Kconfig)、
+[Make.defs](https://github.com/micro-ROS/nuttx_apps/blob/foxy/examples/uros_pingpong/Make.defs) 和
+[Makefile](https://github.com/micro-ROS/nuttx_apps/blob/foxy/examples/uros_pingpong/Makefile)。
+仔细查看这些文件可以说明如何在此 RTOS 中创建 micro-ROS 应用程序。
 
 {% include first_application_common/build_and_flash.md %}
 
 {% include first_application_common/agent_creation.md %}
 
-Then, depending on the selected transport and RTOS, the board connection to the agent may differ.
-In this tutorial, we're using the Olimex STM32-E407 Serial connection, for which the Olimex development board is
-connected to the computer using the usb to serial cable.
+然后，根据所选的传输和 RTOS，开发板与代理的连接方式可能有所不同。
+在本教程中，我们使用 Olimex STM32-E407 串行连接，Olimex 开发板通过 usb 转串口线连接到计算机。
 
 <img width="400" style="padding-right: 25px;" src="../imgs/5.jpg">
 
-Additionally, you'll need to connect a USB-to-mini-USB cable to the USB OTG 1 connector (the miniUSB connector
-that is closer to the Ethernet port).
+此外，您还需要将 USB 转 Mini-USB 线连接到 USB OTG 1 连接器（靠近以太网端口的 MiniUSB 连接器）。
 
 <img width="500" style="padding-right: 25px;" src="../imgs/7.jpg">
 
-***TIP:** Color codes are applicable to
-[this cable](https://www.olimex.com/Products/Components/Cables/USB-Serial-Cable/USB-SERIAL-F/).
-Make sure to match Olimex Rx with Cable Tx and vice-versa. Remember GND!*
+***提示：** 颜色代码适用于[此电缆](https://www.olimex.com/Products/Components/Cables/USB-Serial-Cable/USB-SERIAL-F/)。
+请确保将 Olimex Rx 与电缆 Tx 匹配，反之亦然。记得接地！*
 
-## Running the micro-ROS app
+## 运行 micro-ROS 应用程序
 
-At this point, you have both the client and the agent correctly installed.
+此时，您已正确安装好客户端和代理。
 
-To give micro-ROS access to the ROS 2 dataspace, run the agent:
+要使 micro-ROS 访问 ROS 2 数据空间，请运行代理：
 
 ```bash
-# Run a micro-ROS agent
+# 运行 micro-ROS 代理
 ros2 run micro_ros_agent micro_ros_agent serial --dev [device]
 ```
 
-***TIP:** you can use this command to find your serial device name: `ls /dev/serial/by-id/*`*
+***提示：** 您可以使用此命令查找您的串行设备名称：`ls /dev/serial/by-id/*`*
 
-Then, in order to launch the micro-ROS application, you need to install and open Minicom,
-a text-based serial port communications program. Open a new shell, and type:
+然后，要启动 micro-ROS 应用程序，您需要安装并打开 Minicom，这是一个基于文本的串行端口通信程序。打开一个新的 shell，并输入：
 
 ```bash
 sudo minicom -D [device] -b 115200
 ```
 
-***TIP:** you can use this command to find your serial device name: `ls /dev/serial/by-id/*`. Select the one that starts with `usb-NuttX`.*
+***提示：** 您可以使用此命令查找您的串行设备名称：`ls /dev/serial/by-id/*`。选择以 `usb-NuttX` 开头的那个。*
 
-From inside the Minicom application, press three times the `Enter` key until Nuttx Shell (NSH) appears.
-Once you enter the NSH command line, type:
+从 Minicom 应用程序内部，按三次 `Enter` 键直到出现 Nuttx Shell (NSH)。一旦进入 NSH 命令行，输入：
 
 ```bash
 uros_pingpong
@@ -180,4 +172,4 @@ uros_pingpong
 
 {% include first_application_common/test_app_rtos.md %}
 
-This completes the First micro-ROS Application on NuttX tutorial. Do you want to [go back](../) and try a different RTOS, i.e. FreeRTOS or Zephyr?
+这完成了 NuttX 上的第一个 micro-ROS 应用程序教程。您想[返回](../)并尝试不同的 RTOS，即 FreeRTOS 或 Zephyr 吗？
