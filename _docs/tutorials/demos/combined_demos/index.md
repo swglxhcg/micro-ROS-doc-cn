@@ -1,5 +1,5 @@
 ---
-title: Combined Demos
+title: 组合演示
 permalink: /docs/tutorials/demos/combined_demos/
 ---
 

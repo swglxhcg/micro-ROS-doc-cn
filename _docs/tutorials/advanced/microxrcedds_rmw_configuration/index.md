@@ -1,5 +1,5 @@
 ---
-title: Middleware Configuration
+title: 中间件配置
 permalink: /docs/tutorials/advanced/microxrcedds_rmw_configuration/
 ---
 
@@ -12,7 +12,7 @@ This, of course, has a cost that the users must agree to pay, a precompile tunni
 This tutorial explains which are the memory resources managed by micro-ROS and how to tune them for a particular application.
 It also addresses the RMW run-time configuration API where the user can configure the micro-ROS Agent endpoints or the Micro XRCE-DDS session `client_key`.
 
-## Memory resources optimization
+## 内存资源优化
 
 micro-ROS deals with two different memory resources related with the Micro XRCE-DDS library and its RMW implementation named rmw-microxrcedds.
 
@@ -85,7 +85,7 @@ For example, in the [ping-pong application](https://micro-ros.github.io//docs/tu
 }
 ```
 
-## Run-time configuration
+## 运行时配置
 
 There are some build time parameters related to Client-to-Agent connection (such as **CONFIG_RMW_DEFAULT_UDP_PORT**, **CONFIG_RMW_DEFAULT_UDP_IP** and **CONFIG_RMW_DEFAULT_SERIAL_DEVICE**) that can be configured either at build time or at run-time.
 This means that you can set them in the [configuration file](https://github.com/micro-ROS/micro_ros_setup/blob/humble/config/host/generic/client-host-colcon.meta) mentioned above and that micro-ROS provides a user configuration API for setting some RMW and middleware parameters at run-time.

@@ -1,5 +1,5 @@
 ---
-title: Handling messages memory in micro-ROS
+title: 在 micro-ROS 中处理消息内存
 permalink: /docs/tutorials/advanced/handling_type_memory/
 ---
 

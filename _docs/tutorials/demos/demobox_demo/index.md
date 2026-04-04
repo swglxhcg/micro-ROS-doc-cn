@@ -1,5 +1,5 @@
 ---
-title: DemoBox Power and Boot Time
+title: DemoBox 电源和启动时间
 layout: docs_noheader
 permalink: /docs/tutorials/demos/demobox_demo/
 redirect_from:

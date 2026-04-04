@@ -1,30 +1,30 @@
 ---
-title: External Build Systems
+title: 外部构建系统
 permalink: /docs/concepts/build_system/external_build_systems/
 ---
 
-Once you have read about the official [**micro_ros_setup** tool](/docs/concepts/build_system/), this page will present some other approaches for building micro-ROS as a module or component integrated into other build systems.
+阅读完官方的 [**micro_ros_setup** 工具](/docs/concepts/build_system/)后，本页将介绍其他一些将 micro-ROS 作为模块或组件集成到其他构建系统中的构建方法。
 
-## micro-ROS component for ESP-IDF
+## ESP-IDF 的 micro-ROS 组件
 
-The [micro-ROS component for ESP-IDF](https://github.com/micro-ROS/micro_ros_espidf_component) allows to integrate micro-ROS as a component in an Espressif ESP-IDF Build System. This component allows the user to integrate the micro-ROS API and utilities in an already created ESP-IDF project just by cloning or copying a folder.
+[ESP-IDF 的 micro-ROS 组件](https://github.com/micro-ROS/micro_ros_espidf_component) 允许将 micro-ROS 作为组件集成到 Espressif ESP-IDF 构建系统中。该组件允许用户只需通过克隆或复制文件夹即可在已创建的 ESP-IDF 项目中集成 micro-ROS API 和工具。
 
-Configuration of the micro-ROS library is based on the `colcon.meta` file. For more details visit the [Git repository](https://github.com/micro-ROS/micro_ros_espidf_component).
+micro-ROS 库的配置基于 `colcon.meta` 文件。更多详情请访问 [Git 仓库](https://github.com/micro-ROS/micro_ros_espidf_component)。
 
-## micro-ROS module for Zephyr
+## Zephyr 的 micro-ROS 模块
 
-The [micro-ROS module for Zephyr](https://github.com/micro-ROS/micro_ros_zephyr_module) allows to integrate micro-ROS as a module in a Zephyr-based project. In detail, it enables to integrate the micro-ROS API and utilities in an existing Zephyr project just by cloning or copying a folder.
+[Zephyr 的 micro-ROS 模块](https://github.com/micro-ROS/micro_ros_zephyr_module) 允许将 micro-ROS 作为模块集成到基于 Zephyr 的项目中。详细地说，它允许用户只需通过克隆或复制文件夹即可在现有 Zephyr 项目中集成 micro-ROS API 和工具。
 
-The procedure for configuring the built micro-ROS library is based in `colcon.meta`. For more details visit the [Git repository](https://github.com/micro-ROS/micro_ros_espidf_component).
+配置已构建的 micro-ROS 库的过程基于 `colcon.meta`。更多详情请访问 [Git 仓库](https://github.com/micro-ROS/micro_ros_espidf_component)。
 
-## micro-ROS for Arduino
+## Arduino 的 micro-ROS
 
-The [micro-ROS for Arduino](https://github.com/micro-ROS/micro_ros_arduino) support package is a special port of micro-ROS provided as a set of precompiled libraries for specific platforms. The main reason for this approach is that Arduino does not allow the build of a complex library such as micro-ROS, so by using this approach a ready-to-use solution is provided to the Arduino users.
+[Arduino 的 micro-ROS](https://github.com/micro-ROS/micro_ros_arduino) 支持包是 micro-ROS 的一个特殊端口，作为一组针对特定平台的预编译库提供。这种方法的主要原因是 Arduino 不允许构建像 micro-ROS 这样的复杂库，因此使用这种方法可以为 Arduino 用户提供即用型解决方案。
 
-Along with this support package, there are [detailed instructions](https://github.com/micro-ROS/micro_ros_arduino#how-to-build-the-precompiled-library) for rebuilding the micro-ROS for Arduino libraries for users that need to tune the default configuration.
+除了此支持包外，还有[详细说明](https://github.com/micro-ROS/micro_ros_arduino#how-to-build-the-precompiled-library)，供需要调整默认配置的用户重新构建 Arduino 的 micro-ROS 库。
 
-## micro-ROS for STM32CubeMX
+## STM32CubeMX 的 micro-ROS
 
-The [micro-ROS for STM32CubeMX](https://github.com/micro-ROS/micro_ros_stm32cubemx_utils) package is a set of utilities which enables the seamless configuration, set-up and integration of micro-ROS into an STM32 controller based project. As such, it allows micro-ROS to be virtually supported by the full set of boards offered by <a href="https://www.st.com/content/st_com/en.html">STMicroelectronics</a>.
+[STM32CubeMX 的 micro-ROS](https://github.com/micro-ROS/micro_ros_stm32cubemx_utils) 包是一组工具，可实现 micro-ROS 到基于 STMicroelectronics 控制器的项目的无缝配置、设置和集成。因此，通过它 micro-ROS 几乎可以支持 <a href="https://www.st.com/content/st_com/en.html">STMicroelectronics</a> 提供的全系列开发板。
 
-Its usage is based on Dockers, via a prepared [Dockerfile](https://github.com/micro-ROS/docker/blob/humble/micro-ROS-static-library-builder/Dockerfile) which eases micro-ROS library generation outside of a ROS 2 environment.
+其使用基于 Docker，通过准备好的 [Dockerfile](https://github.com/micro-ROS/docker/blob/humble/micro-ROS-static-library-builder/Dockerfile) 来简化在 ROS 2 环境之外生成 micro-ROS 库的过程。

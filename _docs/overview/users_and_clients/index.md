@@ -1,5 +1,5 @@
 ---
-title: Customers, Partners, Users and Collaborators
+title: 客户、合作伙伴、用户和贡献者
 permalink: /docs/overview/users_and_clients/
 
 customers_list:

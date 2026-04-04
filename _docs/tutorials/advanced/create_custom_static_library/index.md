@@ -1,5 +1,5 @@
 ---
-title: Creating custom static micro-ROS library 
+title: 创建自定义静态 micro-ROS 库 
 permalink: /docs/tutorials/advanced/create_custom_static_library/
 ---
 
@@ -22,7 +22,7 @@ touch my_custom_toolchain.cmake
 touch my_custom_colcon.meta
 ```
 
-## Example of a CMake toolchain
+## CMake 工具链示例
 
 For example for a Cortex M3 a sample toolchain could be:
 
@@ -47,7 +47,7 @@ set(CMAKE_CXX_FLAGS_INIT "-std=c++11 ${FLAGS} -fno-rtti -DCLOCK_MONOTONIC=0 -D'_
 set(__BIG_ENDIAN__ 0)
 ```
 
-## Example of a colcon meta file
+## colcon 元文件示例
 
 A sample colcon.meta file with micro-ROS external transports could be:
 
@@ -107,7 +107,7 @@ A sample colcon.meta file with micro-ROS external transports could be:
 }
 ```
 
-## Building the custom library
+## 构建自定义库
 
 Once you have both files ready, just run the build step in the micro-ROS build system:
 

@@ -1,5 +1,5 @@
 ---
-title: Benchmarking with the Shadow-Builder
+title: 使用阴影构建器进行基准测试
 author: amalki
 permalink: /docs/tutorials/advanced/benchmarking/
 redirect_from:
@@ -15,7 +15,7 @@ redirect_from:
 - [Running the shadow-builder](#running-the-shadow-builder)
 
 
-## Benchmarking an applicastion with the TFA Shadow-builder
+## 使用 TFA 阴影构建器对应用程序进行基准测试
 
 This section is dealing with one specific benchmarking tooling called the
 Shadow Builder. More specifically, this tutorial aims to create a plugin from
@@ -24,7 +24,7 @@ A to Z and how to instrument your code.
 For the sake of ease of understanding, this tutorial is proposing to
 benchmark the time spent on a simple looping function.
 
-## Prerequisites
+## 前置要求
 
 Before getting to the heart of the matter, it is needed to meet the following
 requirements:
@@ -42,7 +42,7 @@ documentation related to the benchmarking is available in
 
 Once all the checkboxes ticked the tutorial can begin.
 
-## TFA Plugin
+## TFA 插件
 
 In order to create a plugin, the information that is crucial to figure out are:
 
@@ -73,7 +73,7 @@ The answers to these questions would be:
 
 These answers provide us with the minimum necessary for the creation of a plugin.
 
-## Create a TFA-Plugin
+## 创建 TFA 插件
 
 ### File tree structure
 
@@ -276,7 +276,7 @@ Status Timer::runnableComments(const TFACommentInfo& cleanComment,
 It is mandatory to return Status::returnStatusOkay() to tell the tfa-core that
 the _Tag_ was handled and therefore that no other plugin will be using it.
 
-#### Start 
+#### 启动
 
 The starting element will basically record a timestamp in the memory. How to do
 so in C programming on a Linux system would be as follow:
@@ -305,7 +305,7 @@ Status Timer::runnableComments(const TFACommentInfo& cleanComment,
 It is mandatory to return Status::returnStatusOkay() to tell the tfa-core that
 the _Tag_ was handled and therefore that no other plugin will be using it.
 
-#### Stop
+#### 停止
 
 Then the stopping element, which will be in charge of getting a timestamp,
 make the delta time spent between the stop and the start and finally print in a
@@ -359,7 +359,7 @@ Additionally, this is necessary to think that the replacement code is actual
 C code that is going to be compiled. Therefore, one should be careful about the
 the way to format it and be careful of the escaping characters.
 
-#### Combine everything together
+#### 将所有内容整合在一起
 
 Finally the whole runnableComment method will look like that:
 
@@ -421,7 +421,7 @@ Status Timer::runnableComments(const TFACommentInfo& cleanComment,
 }
 ```
 
-#### Register the listener
+#### 注册监听器
 
 Once the listener is implemented, then it needs to be registered within the
 TFA plugin manager:
@@ -504,7 +504,7 @@ The example is available [here](https://github.com/micro-ROS/benchmarking_shadow
 To compile the plugin. From the build folder created before in the
 shadow-builder.
 
-## Configuration
+## 配置
 
 ### TFA configuration
 
@@ -532,7 +532,7 @@ to benchmark can be found and where the ouput folder should be set.
 A detailed explaination can be found
 [here](https://github.com/micro-ROS/benchmarking_shadow-builder/blob/master/res/README.md#shadow-builder-configuration).
 
-## Running the shadow-builder
+## 运行阴影构建器
 Once all the above steps are done and the plugin compiled the command to run the
 code's instrumentation would be:
 

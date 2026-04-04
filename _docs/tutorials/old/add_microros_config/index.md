@@ -1,5 +1,5 @@
 ---
-title: Micro-ROS configuration for NuttX
+title: NuttX 的 Micro-ROS 配置
 permalink: /docs/tutorials/old/add_microros_config/
 ---
 
@@ -11,7 +11,7 @@ In this tutorial, we will see how to set a basic Micro-ROS configuration for Nut
 
 This guide is not guarantee to work on every NuttX supported board, because each one has a different level of peripheral implementation and memory available.
 
-## Required hardware
+## 所需硬件
 
 - Any NuttX supported board with at least these characteristics:
     - STM32 MCU.
@@ -21,7 +21,7 @@ This guide is not guarantee to work on every NuttX supported board, because each
 
 - USB-TTY serial cable.
 
-## Workspace set-up
+## 工作空间设置
 
 As a first thing, we're going to create a Micro-ROS workspace. To do so, we will execute the following commands on a console:
 
@@ -41,7 +41,7 @@ source install/local_setup.bash
 
 
 
-## Set the base configuration
+## 设置基础配置
 
  In this guide we will give Micro-ROS support for the [Olimex-STM32-H407 board](https://www.olimex.com/Products/ARM/ST/STM32-H407/open-source-hardware) as an example.
 
@@ -61,7 +61,7 @@ Refreshing...
 
 Now the basic NSH configuration is set. With the steps that follow, we will set the required configuration to run Micro-ROS on this board.
 
-## Micro-ROS configuration.
+## Micro-ROS 配置
 
 In the same console as before, run the commands:
 ```bash

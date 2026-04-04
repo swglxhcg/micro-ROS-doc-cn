@@ -1,5 +1,5 @@
 ---
-title: Edge Impulse Demo
+title: Edge Impulse 演示
 layout: docs_noheader
 permalink: /docs/tutorials/demos/edgeimpulse/
 redirect_from:

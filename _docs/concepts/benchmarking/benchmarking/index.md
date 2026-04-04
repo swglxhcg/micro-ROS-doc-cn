@@ -1,169 +1,115 @@
 ---
-title: Benchmarking
+title: 基准测试
 redirect_from: /benchmarking/
 permalink: /docs/concepts/benchmarking/benchmarking/
 ---
 
-## Table of contents
+## 目录
 
-* [Introduction to Benchmarking](#introduction-to-benchmarking)
-* [Our benchmarking tool framework](#our-benchmarking-tool-framework)
-* [Trace Framework Abstraction](#trace-framework-abstraction)
-* [Shadow Builder](#shadow-builder)
-* [Binary generation for instrumented code](#binary-generation-for-instrumented-code)
-  * [Receiving inputs](#receiving-inputs)
-  * [Parse and Check](#parse-and-check)
-  * [TFA Execution](#tfa-execution)
-  * [Compilation](#compilation)
-* [Step to start benchmarking](#step-to-start-benchmarking)
-
-
-
-## Introduction to Benchmarking
-
-Developing a working and stable application, from the scribbles to the final
-executing binary, is a long and hard task. During this process, developers may come
-across stability and perfomance issues. In addition to these issues, some
-specified QoS might be difficult to quantify.  Solving those problems without the
-proper tools might be frustrating, tedious tasks leading to reduce developers
-efficiency. An adapted benchmarking tool could overcome all those development
-obstacles and increase development time.  There are different KPI (Keep
-Performance Indicators) that one might be interested into. In the framework of
-micro-ROS, the KPI can be freely chosen by the developer. In this way, the
-benchmarking tool will remain flexible and allow the community to constantly add
-support for a lot of different KPI.
-
-The problems we want to tackle are: 
-
- * Out there, many benchmarking tools exist, each of them targeting different KPIs. 
- * Different platforms (Linux/Nuttx/Baremetal et.c.).
- * Too few time/resources to code benchmarking tool for each.
- * Avoid code overhead: Keep code clarity.
- * Avoid execution overhead: Do not want to make execution slower when benchmarking.
-
-## Our Benchmarking tool framework
-
-The benchmarking tool under development is providing a framework to allow
-developers to create their own benchmarking tool. Each part a developer wants to
-benchmark can be added as a plugin using the provided framework. In this way
-plugins can be shared and this improves re-usability as much as possible.
+* [基准测试简介](#基准测试简介)
+* [我们的基准测试工具框架](#我们的基准测试工具框架)
+* [追踪框架抽象](#追踪框架抽象)
+* [阴影构建器](#阴影构建器)
+* [插桩代码的二进制生成](#插桩代码的二进制生成)
+  * [接收输入](#接收输入)
+  * [解析和检查](#解析和检查)
+  * [TFA 执行](#tfa-执行)
+  * [编译](#编译)
+* [开始基准测试的步骤](#开始基准测试的步骤)
 
 
-## Trace Framework Abstraction
 
-The Shadow builder alone only parse comments from the application and pass it
-along to the Trace Framework Abstraction (TFA) Core. The TFA core is aware of
-the plugins that are available, all the plugins’ capabilities and platform
-target. The process goes as explained below: 
+## 基准测试简介
 
- * The line containing the functionality Benchmarking::XX::YY will be checked
-   against all the available plugins.
- * Plugins that are capable of handling functionality will respond with a piece of
-   code that will be replaced with a piece of code.
- * Then the output file will be added in a folder corresponding to the platform
-   type and benchmarking type.
+从最初的构思到最终可执行二进制文件的开发，是一个漫长而艰难的过程。在此过程中，开发人员可能会遇到稳定性和性能问题。除此之外，某些指定的 QoS 可能难以量化。没有适当的工具来解决这些问题可能令人沮丧、繁琐，并会降低开发效率。合适的基准测试工具可以克服所有这些开发障碍并缩短开发时间。有许多不同的 KPI（关键绩效指标）可能令人感兴趣。在 micro-ROS 框架中，KPI 可以由开发人员自由选择。这样一来，基准测试工具将保持灵活性，并允许社区不断添加对许多不同 KPI 的支持。
 
-Being generic is the key for this benchmarking tool. The plugins will in
-contrary bring the specific implementation needed to benchmark  a specific
-platform. Every plugin will provide information as  requested by the parser:
+我们要解决的问题是：
 
- * Provide a list of supported platforms. 
- * Provide a list of functions that are handled.
- * Provide snippet codes that will be added for benchmarking.
- * Provide a list of patches and/or patch code
- * Optional provide an end script to run and execute the benchmarks
+ * 市面上存在许多基准测试工具，每个工具针对不同的 KPI。
+ * 不同的平台（Linux/Nuttx/裸金属等）。
+ * 为每个平台编写基准测试工具的时间和资源太少。
+ * 避免代码开销：保持代码清晰。
+ * 避免执行开销：不想在基准测试时使执行变慢。
 
+## 我们的基准测试工具框架
 
-## Shadow Builder
+正在开发的基准测试工具提供了一个框架，允许开发人员创建自己的基准测试工具。开发人员想要基准测试的每个部分都可以使用提供的框架作为插件添加。这样，插件可以共享，并尽可能提高可重用性。
 
-This section will introduce some concepts related to the shadow builder (SB).
+## 追踪框架抽象
 
-The Shadow builder is a tool that will transparently instrument the code to
-benchmark. The tools will be able to output an “instrumented code” that will be
-later be compiled as a normal code. The following steps describe what the shadow
-builder process flow:
+单独的阴影构建器只会解析应用程序中的注释并将其传递给追踪框架抽象 (TFA) 核心。TFA 核心知道可用的插件、所有插件的功能和目标平台。流程如下：
 
- * Get configuration file from the user (Benchmarking Configuration File).
- * Get appropriate sources.
- * Execute Trace Framework Abstraction Configuration file.
- * Parse the sources file needed Injecting code.
- * Compile the targeted binary for different platforms.
- * If needed, depending what type benchmark is undertaken, compile another
-   target binary benchmarking.
+ * 包含功能 Benchmarking::XX::YY 的行将根据所有可用插件进行检查。
+ * 能够处理该功能的插件将返回一段代码，该代码将被替换为一段代码。
+ * 然后输出文件将添加到与平台类型和基准测试类型对应的文件夹中。
 
-The SB (Shadow Builder) is meant to be as transparent as possible for the user.
-And if the benchmarking is not activated, it should be bypassed.
+对于这个基准测试工具来说，通用性是关键。相反，插件将提供对特定平台进行基准测试所需的具体实现。每个插件将按照解析器的要求提供信息：
 
-The SB is in charge of getting the path/git repository to the source code that
-needs to be benchmarking. The benchmarking. The sources are specified by the
-user in the benchmarking configuration file.
+ * 提供支持的平台列表。
+ * 提供处理的函数列表。
+ * 提供将添加用于基准测试的代码片段。
+ * 提供补丁和/或补丁代码列表
+ * 可选提供运行和执行基准测试的结束脚本
 
-In order to inject code, there are some tools that allow this. CLang AST tool
-will allow to inject some code. 
+## 阴影构建器
 
+本节将介绍与阴影构建器 (SB) 相关的一些概念。
 
-## Binary generation for instrumented code 
+阴影构建器是一种将透明插桩代码用于基准测试的工具。该工具将能够输出"插桩代码"，稍后可以像普通代码一样编译它。以下步骤描述了阴影构建器的工作流程：
 
-The binary generation is the process of compiling the source code. In order to
-benchmark, previously to compile the source code, it is necessary to instrument
-the code. The code will be instrumented in a transparent way for the
-programmer/user. Therefore, a configuration file provided by the programmer will
-be parsed and code injected as described in a configuration file. 
+ * 从用户获取配置文件（基准测试配置文件）。
+ * 获取适当的源代码。
+ * 执行追踪框架抽象配置文件。
+ * 解析需要注入代码的源文件。
+ * 为不同平台编译目标二进制文件。
+ * 如果需要，根据所执行的基准测试类型，编译另一个目标二进制文件进行基准测试。
 
-### Receiving inputs
+SB（阴影构建器）将对用户尽可能透明。如果未激活基准测试，则应将其绕过。
 
-The binary generation's pipeline receives two inputs to work with:
- * Configuration Benchmarking file.
- * Source code to benchmark.
+SB 负责获取需要基准测试的源代码的路径/git 仓库。源代码由用户在基准测试配置文件中指定。
 
-In short, the configuration describes:
+为了注入代码，有一些工具可以实现这一点。CLang AST 工具将允许注入一些代码。
 
- * What is benchmarked (sources).
- * Where to benchmark.
- * What type of benchmark.
- * Optionally against what base line to compare (base line source)
+## 插桩代码的二进制生成
 
-### Parse and Check
+二进制生成是编译源代码的过程。为了进行基准测试，在编译源代码之前，有必要对代码进行插桩。代码将以对程序员/用户透明的方式进行插桩。因此，程序员提供的配置文件将被解析，并按照配置文件中描述的方式注入代码。
 
-Once the input received the **Shadow Builder** parses the configuration
-file. From the configuration file, the Shadow builder gets:
+### 接收输入
 
- * The different benchmarking to be achieved.
- * The targeted platforms.
+二进制生成的管道接收两个输入来工作：
+ * 基准测试配置文件。
+ * 要基准测试的源代码。
 
-In addition to parsing, the Shadow Builder is in charge of checking
-capabilities and consistency within the configuration file and the different
-TFA's plugins registered in the TFA module.
+简而言之，配置描述了：
 
-### TFA Execution
+ * 基准测试的内容（源代码）。
+ * 在哪里进行基准测试。
+ * 基准测试的类型。
+ * 可选地，与什么基线进行比较（基线源代码）
 
-Once parsed and checked against the TFA module capabilities, the Shadow
-Builder will be in charge of translating configuration into source code. The
-translated sources will also be achieved in cooperation with the TFA module. The
-detailed steps of the TFA can be found here. At the end of this step, the TFA
-will generate the new forged source code ready for compilation. In addition to
-patched source code, the TFA will generate scripts that will the benchmarks.
+### 解析和检查
 
-### Compilation
+收到输入后，**阴影构建器**解析配置文件。从配置文件中，阴影构建器获得：
 
-The compilation will happen for every kind of benchmarks and
-platforms targeted. Depending on the kind of benchmark that is being executed,
-there will be one or more binaries per benchmarks session. The number of binary
-generated also depends on what plugins are provided by the user to the shadow
-builder. The shadow builder will retrieve capabilities of the plugins and
-request from the developer, match them and generated software according to the
-matches.
+ * 要实现的不同的基准测试。
+ * 目标平台。
 
+除了解析之外，阴影构建器还负责检查配置文件中以及 TFA 模块中注册的不同 TFA 插件的能力和一致性。
 
-## Step to start benchmarking
+### TFA 执行
 
-The shadow Builder will be executed as follow:
+一旦根据 TFA 模块功能解析和检查完毕，阴影构建器将负责将配置转换为源代码。翻译源代码也将与 TFA 模块协作完成。TFA 的详细步骤可以在[此处](https://github.com/micro-ROS/RTTR-RAIL/blob/master/TFA_documentation.md)找到。在此步骤结束时，TFA 将生成新的可编译的锻造源代码。除了修补的源代码之外，TFA 还将生成将运行基准测试的脚本。
 
- * Software sources are passed to the Shadow Builder.
- * The source are passed and upon comments containing /*Benchmarking::XX::YY*/
-   (a tag)  the code line is passed to the Trace Framework Abstraction module.
-   Using comments is preferable → No includes needed.
- * All plugins that registered to the TFA the Benchmarking::XX::YY functionality
-   will return a piece of code that will be added to the source.
- * Once all parsed, the shadow builder will compile for all the different
-   platforms requested either by plugins or by user configuration.
+### 编译
+
+编译将针对所针对的每种基准测试和平台进行。根据执行的基准测试类型，每个基准测试会话将有一个或多个二进制文件。生成的二进制文件数量还取决于用户向阴影构建器提供的插件数量。阴影构建器将获取插件的功能，并根据开发者请求的功能进行匹配并根据匹配生成软件。
+
+## 开始基准测试的步骤
+
+阴影构建器将按以下方式执行：
+
+ * 软件源代码传递给阴影构建器。
+ * 源代码被传递，当遇到包含 /*Benchmarking::XX::YY*/（标签）的注释时，该代码行将传递给追踪框架抽象模块。
+   使用注释是更好的选择 → 无需包含头文件。
+ * 所有向 TFA 注册了 Benchmarking::XX::YY 功能的插件将返回一段代码，该代码将被添加到源代码中。
+ * 一旦解析完成，阴影构建器将根据插件或用户配置请求的所有不同平台进行编译。

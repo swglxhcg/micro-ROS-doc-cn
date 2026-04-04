@@ -1,5 +1,5 @@
 ---
-title: micro-ROS utilities
+title: micro-ROS 工具
 permalink: /docs/tutorials/programming_rcl_rclc/micro-ROS/
 ---
 
@@ -13,7 +13,7 @@ permalink: /docs/tutorials/programming_rcl_rclc/micro-ROS/
 - [Ping agent](#ping-agent)
 - [Continous serialization](#continous-serialization)
 
-## Allocators
+## 分配器
 
   The allocator object wraps the dynamic memory allocation and deallocating methods used in micro-ROS
 
@@ -32,7 +32,7 @@ permalink: /docs/tutorials/programming_rcl_rclc/micro-ROS/
   - state = `NULL`
   ```
 
-### Custom allocator
+### 自定义分配器
 
 Working in embedded systems, the user might need to modify this default functions with its own memory allocation methods.
 To archieve this, the user can modify the default allocator with its own methods:
@@ -122,7 +122,7 @@ Custom methods prototypes and examples:
 
   *Note: the `state` input argument is espected to be unused*
 
-## Time sync
+## 时间同步
 micro-ROS Clients can synchronize their epoch time with the connected Agent, this can be very useful when working in embedded environments that do not provide any time synchronization mechanism.
 This utility is based on the NTP protocol, taking into account delays caused by the transport layer. An usage example can be found on [`micro-ROS-demos/rclc/epoch_synchronization`](https://github.com/micro-ROS/micro-ROS-demos/blob/iron/rclc/epoch_synchronization/main.c).
 
@@ -141,7 +141,7 @@ if (rmw_uros_epoch_synchronized())
 }
 ```
 
-## Ping agent
+## Ping 代理
 The Client can test the connection with the Agent with the ping utility. This functionality can be used even when the micro-ROS context has not yet been initialized, which is useful to test the connection before trying to connect to the Agent. An example can be found on [`micro-ROS-demos/rclc/ping_uros_agent`](https://github.com/micro-ROS/micro-ROS-demos/blob/iron/rclc/ping_uros_agent/main.c).
 
 ```c
@@ -168,7 +168,7 @@ else
 
 *Note: `rmw_uros_ping_agent` is thread safe.*
 
-## Continous serialization
+## 连续序列化
 
 This utility allows the client to serialize and send data up to a customized size. The user can set the topic lenght and then serialize the data within the publish process. An example can be found on [`micro-ROS-demos/rclc/ping_uros_agent`](https://github.com/micro-ROS/micro-ROS-demos/blob/iron/rclc/ping_uros_agent/main.c), where fragments from an image are requested and serialized on the spot.
 

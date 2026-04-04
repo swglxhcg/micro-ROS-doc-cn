@@ -1,5 +1,5 @@
 ---
-title: How to include a custom ROS message in micro-ROS
+title: 如何在 micro-ROS 中包含自定义 ROS 消息
 permalink: /docs/tutorials/advanced/create_new_type/
 ---
 

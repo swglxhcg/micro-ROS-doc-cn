@@ -1,5 +1,5 @@
 ---
-title: 6LoWPAN Guide
+title: 6LoWPAN 指南
 permalink: /docs/tutorials/old/6lowpan/
 ---
 
@@ -7,7 +7,7 @@ permalink: /docs/tutorials/old/6lowpan/
 
 In this guide, we will show how to use micro-ROS over 6LoWPAN communication.
 
-## What is 6LoWPAN?
+## 什么是 6LoWPAN？
 
 6LoWPAN is an acronym o IPv6 over Low-Power Wireless Personal Area Networks.
 This communication protocol allows wireless communication over IEEE 802.15.4 based networks using IPv6. Some of the main advantages are:
@@ -15,7 +15,7 @@ This communication protocol allows wireless communication over IEEE 802.15.4 bas
 - Easy to use on UDP and TCP server/clients.
 - A protocol designed for low power and constrained devices, perfect or micro-ROS remote sensors.
 
-## Needed hardware
+## 所需硬件
 
 At present, 6LoWPAN is only available for the NuttX RTOS.
 In order to implement the steps highlighted in this guide, you need the following devices:
@@ -29,11 +29,11 @@ In order to implement the steps highlighted in this guide, you need the followin
 You can find a guide of how to setup the micro-ROS-bridge_RPI at its [repository](https://github.com/micro-ROS/micro-ROS-bridge_RPI/blob/new_bridge_tools/README.md).
 In the micro-ROS-bridge-RPI guide, you can find everything that you need to set-up this device base.
 
-## Configure the board
+## 配置开发板
 
 The configuration of the board is divided into two parts: hardware and software set-up.
 
-### Hardware set-up
+### 硬件设置
 
 First we are going to connect the PmodRF2 radio. 
 
@@ -52,7 +52,7 @@ To ease the set-up process, you can use the [RPi pinout](https://pinout.xyz/#) a
 
 The last step is to connect a mini-USB cable to the OTG2 USB port (this USB port next to the Ethernet port).
 
-### Software set-up
+### 软件设置
 
 To create and flash the firmware, we are going to use the micro-ROS build system.
 You can find the instructions at the micro_ros_setup's [README](https://github.com/micro-ROS/micro_ros_setup/blob/dashing/micro_ros_setup/README.md).
@@ -60,7 +60,7 @@ For this particular guide, it is necessary to use the branch `dashing` and the c
 
 Once you follow all the instructions in the build system and flash the board, everything is ready.
 
-## How to use it?
+## 如何使用？
 
 - Turn on the Olimex board and open the NSH console on a terminal.
 - Check if all the applications are ready by typing `?` on the console. It should return the following:

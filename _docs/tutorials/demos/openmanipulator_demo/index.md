@@ -1,5 +1,5 @@
 ---
-title: OpenManipulator-X Demo 
+title: OpenManipulator-X 演示 
 layout: docs_noheader
 permalink: /docs/tutorials/demos/openmanipulator_demo/
 ---

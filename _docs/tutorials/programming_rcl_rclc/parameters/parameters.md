@@ -1,5 +1,5 @@
 ---
-title: Parameter server
+title: 参数服务器
 permalink: /docs/tutorials/programming_rcl_rclc/parameters/
 ---
 
@@ -17,7 +17,7 @@ Ready to use code examples related to this tutorial can be found in [`rclc/rclc_
 - [Callback](#callback)
 - [Cleaning up](#cleaning-up)
 
-## Initialization
+## 初始化
 
 - Default initialization:
     ```c
@@ -73,7 +73,7 @@ Ready to use code examples related to this tutorial can be found in [`rclc/rclc_
     - Low memory mode: 4160 B
 
 
-## Memory requirements
+## 内存需求
 
 The parameter server uses six services and an optional publisher. These need to be taken into account on the `rmw-microxrcedds` package memory configuration:
 
@@ -106,7 +106,7 @@ rc = rclc_executor_init(
 
 *Humble: the variable is `RCLC_PARAMETER_EXECUTOR_HANDLES_NUMBER` has been renamed to `RCLC_EXECUTOR_PARAMETER_SERVER_HANDLES`.*
 
-## Add a parameter
+## 添加参数
 
 The micro-ROS parameter server supports the following parameter types:
 
@@ -165,7 +165,7 @@ The client just needs to set a value on a non-existing parameter. Then this para
 
 *Max name size is controlled by the compile-time option `RCLC_PARAMETER_MAX_STRING_LENGTH`, default value is 50.*
 
-## Delete a parameter
+## 删除参数
 Parameters can be deleted by both, the parameter server and external clients:
 ```c
 rclc_delete_parameter(&param_server, "param2");
@@ -173,7 +173,7 @@ rclc_delete_parameter(&param_server, "param2");
 
 *For external delete requests, the server callback will be executed, allowing the node to reject the operation.*
 
-## Parameters description
+## 参数描述
 
 - Parameter description
     Adds a description of a parameter and its constrains, which will be returned on a describe parameter requests:
@@ -210,7 +210,7 @@ rclc_delete_parameter(&param_server, "param2");
     rclc_set_parameter_read_only(&param_server, "param3", read_only);
     ```
 
-## Callback
+## 回调
 
 When adding the parameter server to the executor, a callback could to be configured. This callback would then be executed on the following events:
 - Parameter value change: Internal and external parameter set on existing parameters.
@@ -293,7 +293,7 @@ Configuration of the callback context:
 rc = rclc_executor_add_parameter_server_with_context(&executor, &param_server, on_parameter_changed, &context);
 ```
 
-## Cleaning up
+## 清理
 
 To destroy an initialized parameter server:
 

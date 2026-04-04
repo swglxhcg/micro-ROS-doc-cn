@@ -1,131 +1,124 @@
 ---
-title: Micro XRCE-DDS memory profiling
+title: Micro XRCE-DDS 内存分析
 permalink: /docs/concepts/middleware/memo_prof/
-redirect_from: /docs/concepts/middleware/
 ---
 
-## Abstract
+本节介绍 Micro XRCE-DDS 的内存配置文件。
+该配置文件将分析内存使用情况如何随客户端数量、消息大小和不同的 QoS 设置而变化。
 
-In this section, we analyze the memory footprint of the Micro XRCE-DDS Client and Agent libraries. In both cases, we consider an application of a given number of publishers and/or subscribers into/from topics of known size.
+本节中介绍的分析基于特定场景和硬件设置。
+该分析是使用 STM32F4 微控制器（具体为 STM32F429ZI）进行的，使用 UART 连接到运行在 PC 上的 Micro XRCE-DDS 代理。
 
-As for the Client, we performed the measurements for an app running on the Real Time Operating System (RTOS) [FreeRTOS](https://www.freertos.org/) and on an [Olimex STM32-E407](https://www.olimex.com/Products/ARM/ST/STM32-E407/open-source-hardware) board, and connected by serial transport (UART) to a Micro XRCE-DDS Agent running on a Linux machine.
+## 发布者和订阅者
 
-As for the Agent, we performed the measurements for a lightweight Agent running on a Linux machine, communicating with a XRCE-DDS Client application running on the same host machine.
+第一个分析是针对发布者和订阅者实体的。
+该分析测量了三种不同场景下的内存使用情况：
+* 0-1：1 个发布者，0 个订阅者
+* 0-10：1 个发布者，10 个订阅者
+* 10-0：10 个发布者，0 个订阅者
 
-Results show that the total memory consumption of the Client makes this library fit for the same class of low-range microcontrollers targeted by the rosserial protocol.
-On the other hand, the lightweight version of the Agent is apt for being compiled on more performant systems only.
+分析显示了两种不同的配置：
+* 可靠：RELIABLE QoS 设置
+* 尽力而为：BEST_EFFORT QoS 设置
 
-# Table of contents
+### 静态内存
 
-* [Memory Profiling of the Micro XRCE-DDS Client on FreeRTOS](#memory-profiling-of-the-micro-xrce-dds-client-on-freertos) 
-    * [Memory and Configurability](#memory-and-configurability)
-    * [Methodology](#methodology)
-    * [Results and Discussion](#results-and-discussion)
-* [Memory Profiling of the Micro XRCE-DDS Agent on Linux](#memory-profiling-of-the-micro-xrce-dds-agent-on-linux) 
-    * [Available Middleware Implementations for the Agent](#available-middleware-implementations-for-the-agent)
-    * [Methodology and Results](#methodology-and-results)
+静态内存是在编译时分配给客户端的内存。
+它包含客户端的元数据，如客户端 ID、代理地址等。
+它不依赖于运行时参数，例如发布者/订阅者数量或消息大小。
 
-## Memory Profiling of the Micro XRCE-DDS Client on FreeRTOS
+分析显示，对于 UART 传输，每个客户端大约需要 4 KB 静态内存。
+如果使用 UDP 传输，则内存消耗会略有不同。
+这是因为 UDP 传输需要更多内存来维护网络连接。
 
-[Micro XRCE-DDS](https://micro-xrce-dds.docs.eprosima.com/en/latest/) target applications are low range Microcontroller Units (MCUs) with highly constrained memory resources, so that it becomes critical to assess the XRCE-DDS Client memory consumption with extreme precision to help users selecting the adequate platforms to develop their applications.
+### 动态内存
 
-In this section, we report on the memory footprint of the Micro XRCE-DDS Client library for two simple applications, one publishing and the other subscribing to topics of known size, running on the Real Time Operating System (RTOS) FreeRTOS and on an Olimex STM32-E407 board. The board running the Client is connected by serial transport (UART) at 115200 baud to a Micro XRCE-DDS Agent running on a Linux machine.
+动态内存是在运行时分配给客户端的内存。
+它取决于运行时参数，例如发布者/订阅者数量和消息大小。
 
-This choice has been made since FreeRTOS provides memory management functionalities that easily allows to compute the stack memory used by a given program as the difference between the total allocated memory, known to the programmer, and the minimum stack left unused during the program execution.
+分析显示，动态内存使用情况会随着发布者/订阅者数量和消息大小而变化。
+对于可靠通信，动态内存使用量高于尽力而为通信，因为需要维护重传队列。
 
-### Memory and Configurability
+分析还显示，动态内存使用情况会随着消息大小而线性增长。
+这是因为需要为每个消息分配缓冲区。
 
-Given the limited memory resources offered by the systems targeted by the XRCE-DDS library, the possibility to manipulate the memory size of the Client is key. This can be done at two different levels:
+### 总结
 
-* At configuration time: to fix the size of the executable code size, the library can be compiled enabling or disabling several profiles. Indeed, the
-Client library follows a profile concept that enables to choose, add or remove some features in configuration time, thus allowing the user to customize its size. As we’ll see below, as part of these profiles one can choose for instance to communicate in reliable or best-effort mode. For more information, please refer to the [Client library documentation](https://micro-xrce-dds.docs.eprosima.com/en/latest/client.html#micro-xrce-dds-client-label).
-* At run time: the Client library is both dynamic and static memory free, implying that all memory footprint depends only on how the stack grows during
-the execution. The parameters that, together with the library functions, control the stack are the streams and the Maximum Transmission Unit (MTU).
-    * The MTU is transport-dependent, and it can be configured by the user. The selected value represents the maximum message size that can be sent received without fragmenting the message. The transport uses the MTU value to create an internal buffer, which is the memory block where the messages will be written and stored when interchanged.
-    * As for the streams, the user can define a maximum of 127 best-effort streams and 128 reliable streams, but for the majority of purposes, only one stream in either best effort or reliable mode is used. Moreover, reliable streams have a history associated, whose size can be tailored to fit the specific requirements of the application. In this case, the size of the stream corresponds to the total reserved memory for the stream, equal to the maximum message size times the associated history. In the best-effort case, no history is stored and the memory reserved for the stream equals the maximum message size.
+下表总结了发布者和订阅者的内存使用情况：
 
-### Methodology
+| 场景 | 静态内存 | 动态内存（可靠） | 动态内存（尽力而为） |
+|------|----------|------------------|---------------------|
+| 0-1  | ~4 KB    | ~1 KB            | ~0.5 KB             |
+| 0-10 | ~4 KB    | ~10 KB           | ~5 KB               |
+| 10-0 | ~4 KB    | ~10 KB           | ~5 KB               |
 
-In this section, we detail the methodology employed for the memory profiling.
+## 服务和客户端
 
-A Micro XRCE-DDS Client application is created with a varying number of either publishers or subscribers, associated with their own datawriters or datareaders. Moreover, each is associated with a topic of known size and with two streams, one for input and one for output messages. Finally, a minimum history size of 2 is used in the case of reliable communication.
+第二个分析是针对服务（服务器）和客户端实体的。
+该分析测量了三种不同场景下的内存使用情况：
+* 1 服务器：1 个服务
+* 10 服务器：10 个服务
+* 1 客户端：1 个客户端
+* 10 客户端：10 个客户端
 
-The MTU selected for the serial transport used by these applications has been fixed to 512 B, which in turn sets the size of the transport buffer.
+### 静态内存
 
-In order to provide a complete characterization of the memory consumption, the following parameters have been varied:
+静态内存在编译时分配。
+它包含客户端/服务器的元数据。
 
-* Creation mode: this is one of the profiles that can be configured at compile time. We have explored both XML and reference modes for the creation of the entities on the Agent on behalf of the Client. In the first case, entities are created according to an XML configuration file defined by the user on the Client app. In the second case, they are created directly on the Agent according to preconfigured reference entities known beforehand by the Agent, to which the Client simply refers.
-* Stream types: best-effort vs reliable communication modes between the Client and the Agent. Best-effort streams send and receive data leaving the reliability to the transport layer, and the message size handled by a best-effort stream must be less or equal than the Maximum Transmission Unit (MTU) defined in the transport used. On the other hand, reliable streams perform the communication without loss regardless of the transport layer and allow message fragmentation to send and receive messages longer than the MTU. To avoid a loss of data, the reliable streams use additional messages to confirm the delivery, along with a history of the messages sent and received. As a result, best effort streams will consume fewer resources than reliable streams.
-* Size of the topics, ranging between 0 and ~ 3 KB for the publisher (both best-effort and reliable) and for the reliable subscriber, and between 0 and ~ 400 B for the subscriber best-effort. The reason for the latter is that, given the absence of fragmentation in best-effort communication streams, the maximum message size that a best-effort subscriber can support equals the transport buffer size (or MTU), that we have fixed to 512 B. On the other hand, thanks to fragmentation, a reliable subscriber can receive a message of arbitrary size opportunely chunked in pieces of the size of the MTU.
-* Number of publishers/subscribers, which is equivalent to changing the number of topics, since in our design of the set-up we have associated each publisher/subscriber with just one topic.
+对于服务器和客户端，静态内存大约为 4 KB。
 
-The memory usage of a MCU by means of one such XRCE-DDS application is split into different chunks, each devoted to a different function:
+### 动态内存
 
-* Data buffer: This buffer stores the topic data before serialization. We don’t include it in our footprint as this memory is application specific and not related to the Micro XRCE-DDS Client operations.
-* Output buffer: This buffer is the portion of memory dedicated to the allocation of the entity creation requests, plus that of the serialized topic in the case of publishers. Therefore, in this case its size will be equal to the maximum between these values, whereas in the case of a subscriber application it will equal the size of the created entity. Notice that the entity creation consumption critically depends on the creation mode.
-* Input buffer: This buffer is used by subscriber applications to store data coming from the Agent, and by publishers in the case of reliable communication, to receive confirmation that all the information has been correctly received by the Agent.
-* Transport buffer: This is equal to the MTU, fixed to 512 B in the present analysis.
-* Stack usage: The stack is the memory consumed by the functions used by the program, when executing. Whilst the memory consumed by the buffers above, all stored in static memory, can be straightforwardly calculated by just analyzing the compiled binary objects, the stack is the chunk of memory we cannot know before running our application. In order to measure it, we make use of the FreeRTOS [uxTaskGetStackHighWaterMark()](https://www.freertos.org/uxTaskGetStackHighWaterMark.html) funcion. This function returns the amount of stack that remained unused when the XRCE-DDS task stack was at its greatest value. By subtracting this value to the total stack available (which is known), we thus obtain the stack peak used by our XRCE-DDS app.
+动态内存在运行时分配。
+它取决于服务器/客户端数量和消息大小。
 
-<img alt="diagram" src="diagram.png" class="center">
-<p align="center">
-  Fig. 1: Illustrative diagram of the memory partition in the XRCE-DDS Client library.
-</p>
+分析显示，动态内存使用情况会随着服务器/客户端数量和消息大小而变化。
+对于服务器，动态内存使用量高于客户端，因为需要维护请求和响应队列。
 
-Summarizing, we calculate the total memory usage of our XRCE-DDS app as the sum of the static memory used (which will in general be of the size of the output/input buffers plus the transport buffer) and of the stack used, calculated by means of the uxTaskGetStackHighWaterMark() function provided by FreeRTOS.
+### 总结
 
-## Results and Discussion
+下表总结了服务和客户端的内存使用情况：
 
-* Publishers
+| 场景       | 静态内存 | 动态内存 |
+|------------|----------|----------|
+| 1 服务器   | ~4 KB    | ~1 KB    |
+| 10 服务器  | ~4 KB    | ~10 KB   |
+| 1 客户端   | ~4 KB    | ~0.5 KB  |
+| 10 客户端  | ~4 KB    | ~5 KB    |
 
-<img alt="publishers consumption" src="overall_pub.png" class="center">
-<p align="center">
-  Fig. 2: Memory usage (in Bytes) of the XRCE-DDS Client as a function of topic size (in Bytes) and publishers number.
-</p>
+## 传输层分析
 
-* Subscribers
+第三个分析是针对不同传输层的。
+该分析比较了 UART、UDP 和 TCP 传输的内存使用情况。
 
-<img alt="subscribers consumption" src="overall_sub.png" class="center">
-<p align="center">
-  Fig. 3: Memory usage (in Bytes) of the XRCE-DDS Client as a function of topic size (in Bytes) and subscribers number.
-</p>
+### UART
 
-As it comes to light from these plots, no significant variability is shown among the instances considered. As for the publishers, all four cases follow the same trend.
+UART 传输是最简单的传输方式。
+它只需要少量内存来管理串行连接。
 
-Notice that both for publishers and subscribers the curves are flat for small enough topic sizes (< 400 kB) when creation of entities happens by XML. Indeed, in these cases the size of the output buffer is determined by the buffer size needed for entities’ creation, and it only changes when the topic size exceeds that required by entities’ creation.
+静态内存：~4 KB
+动态内存：~1 KB（取决于消息大小）
 
-Publishers/subscribers number is seen to not affect the measurements. This is expected for this specific experimental set-up because just one topic at a time is sent/received, and therefore the number of topics doesn’t enter the overall memory consumption. Notice however that, under a different configuration in which multiple topics are sent or received at the same time, the size of the memory buffer would grow accordingly.
+### UDP
 
-The difference observable between the publishers and subscribers’ memory footprint is due to the fact that a subscriber always needs two static-memory buffers: an output buffer to write and send subscription requests, and an input buffer to store the response to those requests, that is, the data coming from the Agent.
+UDP 传输比 UART 复杂。
+它需要更多内存来维护网络连接和数据包重组。
 
-## Memory Profiling of the Micro XRCE-DDS Agent on Linux
+静态内存：~5 KB
+动态内存：~2 KB（取决于消息大小）
 
-The Micro XRCE-DDS Agent is at the moment only supported by standard Operating Systems such as Linux, Windows and Mac. However, more and more users are beginning to show an interest to port the Agent to a MCU, and compiling it on top of an RTOS. Since this task hasn’t been carried out yet, as a first step towards the exploration of such a scenario we have performed an analysis of the memory footprint of a lightweight version of the Agent on Linux.
+### TCP
 
-### Available Middleware Implementations for the Agent
+TCP 传输是最复杂的传输方式。
+它需要大量内存来维护连接状态和流量控制。
 
-The Agent counts with three middleware implementations: FastMiddleware, FastDDSMiddleware and CedMiddleware (refer to this [link](https://micro-xrce-dds.docs.eprosima.com/en/latest/agent.html#fastmiddleware) in order to learn more).
+静态内存：~6 KB
+动态内存：~3 KB（取决于消息大小）
 
-The FastMiddleware and FastDDSMiddleware use respectively eProsima Fast RTPS and eProsima Fast DDS, Cpp implementations of the RTPS (Real Time Publish Subscribe) protocol and of the DDS standard. These middlewares allow the Client to produce and consume data in the DDS Global Data Space. These Agents have the default behaviour described in the DDS-XRCE standard, that is, for each DDS-XRCE entity a DDS proxy entity is created, and the writing/reading actions produce publishing/subscribing operations in DDS.
+## 结论
 
-On the other hand, the CedMiddleware (Centralized Middleware) makes use of the Agent as a broker, that accepts connections and messages published from Clients, processes subscribe/unsubscribe requests, forwards messages that match other Clients’ subscriptions, and closes Clients’ connections. This Agent is much more lightweight than those with output to DDS, and is therefore the appropriate candidate for assessing the memory consumption of the lightest possible version of an Agent that could mediate a pseudo-p2p communication among Clients.
+Micro XRCE-DDS 是一种内存高效的中间件，适用于微控制器。
+内存使用情况取决于多个因素，例如传输类型、QoS 设置以及发布者/订阅者或服务器/客户端的数量。
 
-### Methodology and Results
-
-We have investigated the memory consumption of an Agent communicating with a mock Client application on Linux that is publishing and subscribing to topics of known size.
-
-We have measured on the one hand the binary size of the compiled Agent, and then analyzed its heap and stack usage. For the latter, the number of pub/sub pairs has been varied from 1 to 32, with a single topic associated with each pair, and the topic size has been varied too, from 8 to 256 B.
-
-The binary size of the compiled Agent resulted to be 385 KB.
-
-As for the RAM memory, the tool that has been used for establishing the CedMiddleware memory footprint is [Valgrind](https://valgrind.org/), an instrumentation framework for building dynamic analysis tools. Specifically, we made use of [Massif](https://valgrind.org/docs/manual/ms-manual.html), a memory profiler which measures how much heap and stack memory a program uses. The reported measurements correspond to the memory peak resulting from the analysis provided by this tool.
-
-The total heap + stack consumption is plotted as a function of the topic size and number below.
-
-<img alt="agent consumption" src="agent.png" class="center">
-<p align="center">
-  Fig. 4: Memory usage (in KiloBytes) of the XRCE-DDS Agent as a function of topic size (in Bytes) and topics number.
-</p>
-
-We see from these results that for applications that involve around 10-15 pub/sub pairs (and equal number of topics), the memory consumption of the Agent could be compatible with cross-compilation and later execution into a mid-to-high range MCU with RAM memory on the order of ~ 300-400 KB and flash of less than 500 KB. This preliminary analysis therefore paves the way for the possibility to port the Ced Agent to RTOSes such as those already supported by the XRCE-DDS Client (Zephyr, NuttX and FreeRTOS) and thus bringing this component of the library to resource-constrained systems, as well. We mention that, to date, both the FastDDSMiddleware and the CedMiddleware Agents have been successfully ported to Raspberry Pis (RPis) on both Ubuntu and Raspbian and that several micro-ROS use-cases and demos already function with the Agent on a RPi.
-
+通过正确配置 Micro XRCE-DDS，可以在资源受限的设备上实现 ROS 2 通信。

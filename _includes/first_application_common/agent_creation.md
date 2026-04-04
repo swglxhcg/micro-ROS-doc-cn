@@ -1,18 +1,17 @@
-## Creating the micro-ROS agent
+## 创建 micro-ROS 代理
 
-The micro-ROS app is now ready to be connected to a micro-ROS agent to start talking with the rest of the ROS 2
-world.
-To do that, let's first of all create a micro-ROS agent:
+现在 micro-ROS 应用程序已准备好连接到 micro-ROS 代理，以开始与 ROS 2 其他部分进行通信。
+为此，让我们首先创建一个 micro-ROS 代理：
 
 ```bash
-# Download micro-ROS-Agent packages
+# 下载 micro-ROS-Agent 软件包
 ros2 run micro_ros_setup create_agent_ws.sh
 ```
 
-Now, let's build the agent packages and, when this is done, source the installation:
+现在，让我们构建代理软件包，完成后source安装目录：
 
 ```bash
-# Build step
+# 构建步骤
 ros2 run micro_ros_setup build_agent.sh
 source install/local_setup.bash
 ```

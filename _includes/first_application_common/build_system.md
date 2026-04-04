@@ -1,56 +1,43 @@
-## Installing ROS 2 and the micro-ROS build system
+## 安装 ROS 2 和 micro-ROS 构建系统
 
-First of all, install **ROS 2 Humble Hawksbill** on your Ubuntu 22.04 LTS computer.
-To do so from binaries, via Debian packages, follow the instructions detailed
-[here](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html).
+首先，在 Ubuntu 22.04 LTS 计算机上安装 **ROS 2 Humble Hawksbill**。
+要通过 Debian 软件包从二进制文件安装，请按照[此处](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html)详细说明的说明进行操作。
 
-***TIP:** Alternatively, you can use a docker container with a fresh ROS 2 Humble installation. The one that serves
-the purpose is the container run by the command:*
+***提示：**或者，您可以使用包含全新 ROS 2 Humble 安装的 Docker 容器。合适的容器运行命令是：*
 
 ```bash
 docker run -it --net=host -v /dev:/dev --privileged ros:humble
 ```
 
-Once you have a ROS 2 installation in the computer, follow these steps to install the micro-ROS build system:
+在计算机上安装 ROS 2 后，按照以下步骤安装 micro-ROS 构建系统：
 
 ```bash
-# Source the ROS 2 installation
+# source ROS 2 安装目录
 source /opt/ros/$ROS_DISTRO/setup.bash
 
-# Create a workspace and download the micro-ROS tools
+# 创建工作空间并下载 micro-ROS 工具
 mkdir microros_ws
 cd microros_ws
 git clone -b $ROS_DISTRO https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup
 
-# Update dependencies using rosdep
+# 使用 rosdep 更新依赖项
 sudo apt update && rosdep update
 rosdep install --from-paths src --ignore-src -y
 
-# Install pip
+# 安装 pip
 sudo apt-get install python3-pip
 
-# Build micro-ROS tools and source them
+# 构建 micro-ROS 工具并 source 它们
 colcon build
 source install/local_setup.bash
 ```
 
-These instructions will setup a workspace with a ready-to-use micro-ROS build system.
-This build system is in charge of downloading the required cross-compilation tools and building the apps for the
-required platforms.
+这些说明将设置一个工作空间，其中包含可立即使用的 micro-ROS 构建系统。
+该构建系统负责下载所需的交叉编译工具并为所需平台构建应用程序。
 
-The build system's workflow is a four-step procedure:
+构建系统的工作流程包括四个步骤：
 
-* **Create step:** This step is in charge of downloading all the required code repositories and cross-compilation
-  toolchains for the specific hardware platform. Among these repositories, it will also download a collection of ready
-  to use micro-ROS apps.
-* **Configure step:** In this step, the user can select which app is going to be cross-compiled by the toolchain.
-  Some other options, such as transport, agent's IP address/port (for UDP transport) or device ID (for serial connections) will be also selected in this step.
-* **Build step:** Here is where the cross-compilation takes place and the platform-specific binaries are generated.
-* **Flash step:** The binaries generated in the previous step are flashed onto the hardware platform memory,
-  in order to allow the execution of the micro-ROS app.
-Further information about micro-ROS build system can be found
-[here](https://github.com/micro-ROS/micro_ros_setup/tree/dashing/micro_ros_setup).
-
-## Creating a new firmware workspace
-
-Once the build system is installed, let's create a firmware workspace that targets all the required code and tools:
+* **创建步骤：**此步骤负责下载特定硬件平台所需的所有代码仓库和交叉编译工具链。其中还包括一组可立即使用的 micro-ROS 应用程序。
+* **配置步骤：**在此步骤中，用户可以选择将由工具链交叉编译的应用程序。其他一些选项，如传输方式、代理 IP 地址/端口（用于 UDP 传输）或设备 ID（用于串行连接）也将在此步骤中选择。
+* **构建步骤：**在此进行交叉编译并生成特定平台的二进制文件。
+* **烧录步骤：**将上一步生成的二进制文件烧录到硬件平台内存中，以允许执行 micro-ROS 应用程序。

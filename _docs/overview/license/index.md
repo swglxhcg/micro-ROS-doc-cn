@@ -1,5 +1,5 @@
 ---
-title: License Overview
+title: 许可证概述
 permalink: /docs/overview/license/
 redirect_from:
   - /license/

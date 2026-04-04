@@ -1,5 +1,5 @@
 ---
-title: Kobuki Demo
+title: Kobuki 演示
 permalink: /docs/tutorials/demos/kobuki_demo/
 redirect_from:
   - /kobuki_demo/

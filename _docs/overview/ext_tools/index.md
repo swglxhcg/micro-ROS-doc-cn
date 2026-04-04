@@ -1,5 +1,5 @@
 ---
-title: Integration into External Tools
+title: 集成到外部工具
 permalink: /docs/overview/ext_tools/
 ---
 

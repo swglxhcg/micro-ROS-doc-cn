@@ -1,11 +1,11 @@
 # Site settings
-url: https://micro.ros.org   # Do not put a trailing slash here, cf. https://github.com/jekyll/jekyll-redirect-from/issues/178.
-title: micro-ROS
+url: https://swglxhcg.github.io   # Do not put a trailing slash here, cf. https://github.com/jekyll/jekyll-redirect-from/issues/178.
+title: micro-ROS 中文文档库
 description: >
-  ROS 2 for microcontrollers
-lang: en-US
+  ROS 2 for microcontrollers 中文文档库
+lang: zh-CN
 
-baseurl: "" # the subpath of your site, e.g. /blog/
+baseurl: "/micro-ROS-doc-cn/" # the subpath of your site, e.g. /blog/
 git_address: https://github.com/micro-ROS/micro-ros.github.io
 git_edit_address: https://github.com/micro-ROS/micro-ros.github.io/blob/master
 
@@ -32,7 +32,7 @@ exclude:
   - .git
   - vendor/bundle
 
-timezone: Europe/Berlin
+timezone: Asia/Shanghai
 defaults:
 - scope:
     path: _posts

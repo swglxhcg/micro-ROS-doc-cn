@@ -1,5 +1,5 @@
 ---
-title: Quality of service
+title: 服务质量
 permalink: /docs/tutorials/programming_rcl_rclc/qos/
 ---
 
@@ -9,7 +9,7 @@ permalink: /docs/tutorials/programming_rcl_rclc/qos/
 - [Best Effort](#best-effort)
 - [Custom QoS configuration](#custom-qos-configuration)
 
-## Reliable QoS
+## 可靠服务质量
 
 Reliable communication implies a confirmation for each message sent. This mode can detect errors in the communication process at the cost of increasing the message latency and the resources usage.
 
@@ -36,11 +36,11 @@ This message confirmation proccess can increase blocking time on `rcl_publish` o
 
   The default value for all publishers is configured at compilation time by the cmake variable `RMW_UXRCE_PUBLISH_RELIABLE_TIMEOUT`.
 
-## Best Effort
+## 尽力而为
 
 In best effort mode no acknowledgement is needed, the messages sent are expected to be received. This method improves publication throughput and reduces resources usage but is vulnerable to communication errors.
 
-## Custom QoS configuration
+## 自定义服务质量配置
 
 The user can customize their own QoS using the available `rmw_qos_profile_t` struct:
 

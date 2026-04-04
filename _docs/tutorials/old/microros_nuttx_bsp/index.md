@@ -1,5 +1,5 @@
 ---
-title: Adding Micro-ROS to a NuttX board configuration
+title: 将 Micro-ROS 添加到 NuttX 板级配置
 permalink: /docs/tutorials/old/microros_nuttx_bsp/
 ---
 
@@ -7,17 +7,17 @@ permalink: /docs/tutorials/old/microros_nuttx_bsp/
 
 **If you want to use Micro-ROS on a board that is not yet supported, this tutorial is for you!** However, we can only explain what you have to do on a board which is supported by NuttX already, that is, a board that has a board configuration. Writing a completely new board support package and configuration is beyond the scope of what the Micro-ROS project can teach.
 
-### Caveats
+### 注意事项
 
 1. The instructions in this tutorial have been tested on Linux only and since they use Linux shell commands, they will probably not work on Windows.
 1. We have only ever used ARM-based boards. Boards using different microcontrollers might needs a different approach.
 1. Our approach to adding C++ atomic swap instructions is problematic and needs further work, but it'll get you started.
 
-### Basics
+### 基础知识
 
 Compiling Micro-ROS for NuttX requires that the Board Configuration has a few C++ settings enabled. This tutorial explains what has to be added to an existing NuttX board configuration.
 
-### Background: NuttX Board Configurations
+### 背景：NuttX 板级配置
 
 **Note** This section is just for background, you don't need to create a board configuration yourself!
 
@@ -27,7 +27,7 @@ Therefore, the RTOS needs to be told which peripherals are used on a given board
 
 This is what we call the "board *configuration*". It differs from the so-called "Board Support *Package* (BSP)" which would contain the drivers for the micro-controller and its peripherals.
 
-### Directory Structure
+### 目录结构
 
 In NuttX up to version 7.x (which Micro-ROS currently uses), the configurations are stored in the `configs/` subdirectory.
 
@@ -37,7 +37,7 @@ Within the board base directory, there are two things:
  1) Board configuration directories, specifically `include`, `scripts`, and `src`.
  2) Predefined NuttX *build configurations*. These directories only have a `defconfig` file in them, and they are the directories you can pass to `scripts/configure.sh`.
 
-## Adding Micro-ROS support
+## 添加 Micro-ROS 支持
 
 To add Micro-ROS build support, have two to 2 things:
 
@@ -78,7 +78,7 @@ EXTRA_LIBPATHS = -L "${shell dirname "$(LIBSUPXX)"}"
 EXTRA_LIBS = -lsupc++
 ```
 
-### Add C++ atomics builtins
+### 添加 C++ 原子内建函数
 
 C++11 and up requires that the toolchain provides atomic swap operations. These are hardware specific and in the toolchain version we currently use, they are not yet available for ARM. Therefore, we add a compatibility file called `libatomic.c`
 

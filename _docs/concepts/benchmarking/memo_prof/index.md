@@ -1,202 +1,189 @@
 ---
-title: Memory profiling
+title: 内存分析
 redirect_from: /memo_prof/
 permalink: /docs/concepts/benchmarking/memo_prof/
 ---
 
-## Abstract
+## 摘要
 
-In this section, we analyze the memory footprint of the micro-ROS Client library. To perform the profiling, we have taken into account both applications of publishers/subscribers into/to ROS topics of known size and client/server type applications. We explored several different configurations by tuning key parameters such as message size, entity number, history size and transport protocol. Also, we discriminated between different types of memory. Indeed, while the [XRCE-DDS](https://micro-xrce-dds.docs.eprosima.com/en/latest/) Client is completely dynamic memory free, the micro-ROS Client makes use of both static and dynamic memory. It is therefore key to assess how much of each type of memory micro-ROS consumes, especially for what concerns real-timeness and determinism in the library behaviour. 
+在本节中，我们分析了 micro-ROS 客户端库的内存占用情况。为了进行性能分析，我们考虑了发布者/订阅者应用程序向已知大小的 ROS 主题发布/订阅数据的情况，以及客户端/服务器类型的应用程序。我们通过调整关键参数（如消息大小、实体数量、历史记录大小和传输协议）探索了多种不同配置。此外，我们还区分了不同类型的内存。实际上，虽然 [XRCE-DDS](https://micro-xrce-dds.docs.eprosima.com/en/latest/) 客户端完全不使用动态内存，但 micro-ROS 客户端同时使用静态内存和动态内存。因此，评估 micro-ROS 消耗的每种类型的内存量至关重要，特别是与库的实时性和确定性相关的内容。
 
-We performed the measurements for applications running on [FreeRTOS](https://www.freertos.org/index.html) and on an [ESP32](https://www.espressif.com/en/products/socs/esp32) board connected by UDP (via WiFi) to a micro-ROS Agent running on a Linux machine.
+我们对在 [FreeRTOS](https://www.freertos.org/index.html) 上运行的应用程序以及通过 UDP（通过 WiFi）连接到在 Linux 机器上运行的 micro-ROS 代理的 [ESP32](https://www.espressif.com/en/products/socs/esp32) 开发板上的应用程序进行了测量。
 
-Results show that the total memory consumption of the Client is higher than that of the XRCE-DDS middleware, at least by using the default configuration parameters of the library. However, by opportunely adjusting some of these parameters (e.g., the MTU or the history size) to the needs of the specific application, it is possible to tune the total memory consumption to fit way better the limited resources of the target devices.
+结果表明，使用库的默认配置参数时，客户端的总内存消耗高于 XRCE-DDS 中间件。然而，通过根据特定应用的需求适当调整这些参数（例如 MTU 或历史记录大小），可以将总内存消耗调整到更好地适应目标设备的有限资源。
 
-## Table of contents
+## 目录
 
-* [Memory management of the micro-ROS stack](#memory-management-of-the-micro-ros-stack)
-  * [Memory management of the XRCE-DDS library](#memory-management-of-the-xrce-dds-library)
-  * [Memory management of the RMW](#memory-management-of-the-rmw)
-  * [Additional considerations](#additional-considerations)
-  * [Memory buffers](#memory-buffers)
-* [Measurements and methodology](#measurements-and-methodology)
-  * [Tested scenarios](#tested-scenarios)
-  * [Results](#results)
-    * [Pub-Sub apps](#pub-sub-apps)
-    * [Client-Server apps](#client-server-apps)
-  * [Conclusions](#conclusions)
+* [micro-ROS 栈的内存管理](#micro-ros-栈的内存管理)
+  * [XRCE-DDS 库的内存管理](#xrce-dds-库的内存管理)
+  * [RMW 的内存管理](#rmw-的内存管理)
+  * [其他注意事项](#其他注意事项)
+  * [内存缓冲区](#内存缓冲区)
+* [测量和方法](#测量和方法)
+  * [测试场景](#测试场景)
+  * [结果](#结果)
+    * [发布-订阅应用程序](#发布-订阅应用程序)
+    * [客户端-服务器应用程序](#客户端-服务器应用程序)
+  * [结论](#结论)
 
 
-## Memory management of the micro-ROS stack
+## micro-ROS 栈的内存管理
 
-micro-ROS’ [target devices](https://micro-ros.github.io/docs/overview/hardware/) are low-to-mid range Microcontroller Units (MCUs) with highly constrained resources, so that it is critical to assess the Client’s memory consumption to help users selecting the optimal library configuration for their application and the adequate platform on which to run it.
+micro-ROS 的[目标设备](https://micro-ros.github.io/docs/overview/hardware/)是资源高度受限的低端到中端微控制器单元 (MCU)，因此评估客户端的内存消耗对于帮助用户为其应用程序选择最佳库配置以及运行它的合适平台至关重要。
 
-Given the limited memory resources of these devices, the possibility to manipulate and tune its memory consumption is key. micro-ROS tries to address the memory management issue by prioritizing the use of static memory instead of dynamic memory as much as possible, and by optimizing the memory footprint of the applications by tuning a set of configuration parameters related with the memory resources at compile-time. 
+鉴于这些设备的内存资源有限，对其内存消耗进行操作和调整的可能性是关键。micro-ROS 尝试通过尽可能优先使用静态内存而非动态内存来解决问题，并通过在编译时调整与内存资源相关的一组配置参数来优化应用程序的内存占用。
 
-This tuning can be done by acting on two different memory resources: those handled by the [Micro XRCE-DDS](https://github.com/eProsima/Micro-XRCE-DDS) library and those handled by its RMW implementation [rmw-microxrcedds](https://github.com/micro-ROS/rmw-microxrcedds). In this section, we resume the most relevant parameters that control these resources and how the user can manipulate the micro-ROS memory consumption by acting on each of these layers.
+这种调整可以通过处理两类不同的内存资源来实现：一类由 [Micro XRCE-DDS](https://github.com/eProsima/Micro-XRCE-DDS) 库处理，另一类由其 RMW 实现 [rmw-microxrcedds](https://github.com/micro-ROS/rmw-microxrcedds) 处理。在本节中，我们总结控制这些资源的最相关参数，以及用户如何通过作用于每一层来操纵 micro-ROS 的内存消耗。
 
-### Memory management of the XRCE-DDS library
+### XRCE-DDS 库的内存管理
 
-The Micro XRCE-DDS Client is completely dynamic and static memory free, implying that all memory footprint depends only on how the stack grows during the execution. Handling of this resource is done at configuration time, when the user can enable or disable several profiles before compiling, thus allowing to fix the executable code size. As part of these profiles, the user can control the memory growth by manipulating the Maximum Transmission Unit (MTU) and the communication streams.
+Micro XRCE-DDS 客户端完全不使用动态和静态内存，这意味着所有内存占用仅取决于堆栈在执行期间的生长方式。此资源的处理在配置时进行，用户可以在编译前启用或禁用多个配置文件，从而允许修复可执行代码大小。作为这些配置文件的一部分，用户可以通过操作最大传输单元 (MTU) 和通信流来控制内存增长。
 
-The MTU regulates the size of the communication streams and matches the available memory in the internal buffers of the transport layer, which is the memory block where the messages will be written and stored when exchanged.  It defaults to 512 B for all transports available in micro-ROS.
+MTU 调节通信流的大小，并与传输层内部缓冲区的可用内存匹配，这是写入和交换消息的内存块。它在 micro-ROS 的所有可用传输中默认为 512 字节。
 
-Communication streams regulate how messages flow between the Clients and the Agent and represent ordered flows of information. There are two kinds of streams, Best-Effort and Reliable. Best-Effort streams consist in a single data buffer where only one message at a time is handled. Because of this, Best-Effort streams send and receive data leaving the reliability to the transport layer, and the message size handled by such a stream must be less or equal than the MTU defined in the transport used. On the other hand, Reliable streams enable lossless communication, regardless of the transport layer and allow message fragmentation to send and receive messages longer than the MTU. The number of chunks allowed to store the fragmented messages is controlled by the XRCE-DDS history (also referred to as XRCE_history in the following sections), which defaults to 4 slots.
+通信流调节消息在客户端和代理之间的流动方式，代表有序的信息流。流有两种类型：尽力而为（Best-Effort）和可靠（Reliable）。尽力而为流由一个数据缓冲区组成，一次只能处理一条消息。正因如此，尽力而为流发送和接收数据并将可靠性留给传输层，此类流处理的消息大小必须小于或等于所用传输中定义的 MTU。另一方面，可靠流实现无损通信，不受传输层影响，并允许消息分片以发送和接收大于 MTU 的消息。用于存储分片消息的块数由 XRCE-DDS 历史记录控制（在以下部分也称为 XRCE_history），默认为 4 个槽位。
 
-### Memory management of the RMW
+### RMW 的内存管理
 
-The `rmw-microxrcedds` layer uses static memory for allocating the resources associated with the ROS client support libraries, such as nodes, publishers, subscribers etc. This memory is managed by static memory pools that are shared among all the entities of a given application. The number of pools is fixed by the RMW message history (also referred to as RMW_history in the rest of the text), a parameter which is chosen by the user as a CMake flag.
-These RMW pools act as message queues where to keep the subscription messages before the user reads them. The size of each pool is given by the MTU &#215; XRCE_history.
+`rmw-microxrcedds` 层使用静态内存来分配与 ROS 客户端支持库（如节点、发布者、订阅者等）相关的资源。此内存由静态内存池管理，这些静态内存池在给定应用程序的所有实体之间共享。池的数量由 RMW 消息历史记录（在本文其余部分也称为 RMW_history）固定，这是用户作为 CMake 标志选择的参数。
 
-### Additional considerations
+这些 RMW 池用作消息队列，用于在用户读取之前保存订阅消息。每个池的大小由 MTU × XRCE_history 给出。
 
-It should be clear by now that the two history buffers involved in the Client-Agent communication are different in nature: the XRCE-DDS history is used to store chunks of fragmented messages if Reliable communication is implemented. Thanks to this, in Reliable mode one can send or receive up to MTU &#215; XRCE_history minus the memory reserved for headers, whereas Best-Effort communication streams can only exchange messages of size smaller or equal to the MTU.  The history of the RMW, in turn, controls the reception of data in the case of subscription and services. In this case, a buffer ring is generated in the RMW to store and cushion the data received from the XRCE-DDS library while handling the `take` calls received from the user’s interface to fetch the data and send them through the higher layers all the way up to the user’s application.
+### 其他注意事项
 
-Notice that this reflects the different behaviours of the XRCE-DDS library and of the RMW under subscription. While the XRCE-DDS library functions with callbacks, by warning the user whenever a new message comes in, the RMW functions by polling: this library listens to the topics the user has subscribed to and stores them until they are explicitly requested.
+现在应该清楚的是，客户端-代理通信中涉及的两个历史缓冲区在性质上是不同的：如果实现了可靠通信，XRCE-DDS 历史记录用于存储分片消息的块。借助于此，在可靠模式下，一个人可以发送或接收最多 MTU × XRCE_history 减去为头保留的内存，而尽力而为通信流只能交换小于或等于 MTU 的消息。另一方面，RMW 的历史记录控制订阅和服务情况下的数据接收。在这种情况下，RMW 中会生成一个环形缓冲区来存储和缓冲从 XRCE-DDS 库接收的数据，同时处理从用户界面收到的 `take` 调用，以获取数据并通过高层发送到用户应用程序。
 
-Finally notice that the nature and size of the memory consumed by publications and subscriptions is quite different. The reason is that subscribers stockpile the data in pre-allocated memory buffers. This enables storage of messages in slots (whose number depends on the XRCE-DDS and RMW histories) for a twofold purpose: to avoid loss of data in the case Reliable communication has been opted for, and this is reflected by the XRCE-DDS history, and to allow a flexible message handling and asynchronous message passing between the various layers, which is reflected in the RMW_history. The case of services matches closely that of subscribers, since in a request/response pattern all entities involved need to receive, and thus store and handle, data.
+请注意，这反映了 XRCE-DDS 库和 RMW 在订阅下的不同行为。XRCE-DDS 库使用回调工作，每当新消息到达时都会警告用户，而 RMW 使用轮询工作：该库监听用户已订阅的主题并存储它们，直到用户明确请求。
 
-The diagrams shown below address all the features discussed in this section in a graphical way.
+最后请注意，发布和订阅消耗的内存的性质和大小是不同的。原因是订阅者在预分配的内存缓冲区中存储数据。这使得能够在槽位中存储消息（其数量取决于 XRCE-DDS 和 RMW 历史记录），用于双重目的：在选择可靠通信的情况下避免数据丢失（这反映在 XRCE-DDS 历史记录中），并允许灵活的消息处理和各层之间的异步消息传递，这反映在 RMW_history 中。服务的情况与订阅者的情况非常相似，因为在请求/响应模式中，所有涉及的实体都需要接收，因此需要存储和处理数据。
 
-<img alt="Pub/sub diagram" src="pubsub_diagram.png" class="center">
+下图以图形方式说明了本节讨论的所有功能。
+
+<img alt="发布/订阅图" src="pubsub_diagram.png" class="center">
 <p align="center">
-  Fig. 1: Illustrative diagram of the memory management of the micro-ROS Client library in publishers and subscribers applications.
+  图 1：发布者和订阅者应用程序中 micro-ROS 客户端库内存管理的说明图。
 </p>
 
-<img alt="Services diagram" src="services_diagram.png" class="center" width="50%">
+<img alt="服务图" src="services_diagram.png" class="center" width="50%">
 
 <p align="center">
-  Fig. 2: Illustrative diagram of the memory management of the micro-ROS Client library in service applications.
+  图 2：服务应用程序中 micro-ROS 客户端库内存管理的说明图。
 </p>
 
-### Memory buffers
+### 内存缓冲区
 
-The total memory consumed by a micro-ROS application running on a MCU can be calculated as the direct sum of different chunks of memory, each devoted to a different function: static memory, stack and dynamic memory.
+在 MCU 上运行的 micro-ROS 应用程序消耗的总内存可以直接计算为不同内存块的总和，每个内存块用于不同的功能：静态内存、栈和动态内存。
 
-In this section we give a brief description on these kinds of memory used by the micro-ROS library.
+在本节中，我们简要描述 micro-ROS 库使用的这些类型的内存。
 
-*Static Memory*
+*静态内存*
 
-The static memory has been calculated as the difference between the memory occupied by the .bss and .data sections with a non-zero number of entities, and the memory occupied by the same sections when no micro-ROS application is running, that is, the memory occupied by the rest of components of the RTOS and libraries. This allows discriminating between the memory effectively occupied by micro-ROS and the one that is not specific to it. Notice that we don’t take into consideration neither the constant data stored in flash memory (.text section) nor the data buffer, which is the buffer that stores the data before serialization, since it is specific to the user application and not directly related to the micro-ROS Client operations.
+静态内存计算为 .bss 和 .data 部分在实体数量非零时占用的内存与未运行 micro-ROS 应用程序时相同部分占用的内存之间的差值，即 RTOS 和库的其他组件占用的内存。这允许区分 micro-ROS 实际占用的内存和非特定于它的内存。请注意，我们没有考虑存储在闪存中的常量数据（.text 部分），也没有考虑数据缓冲区，这是序列化前存储数据的缓冲区，因为它特定于用户应用程序，与 micro-ROS 客户端操作没有直接关系。
 
-*Stack Memory*
+*栈内存*
 
-The stack is the memory consumed by the functions used by the program, when executing. Whilst the static memory can be straightforwardly calculated by just analyzing the compiled binary objects, the stack is the chunk of memory one cannot know precisely before running the application. The stack consumed during the program execution is taken into account by means of a FreeRTOS specific function involved in the memory management capabilities offered by this RTOS, the uxTaskGetStackHighWaterMark() function. This function returns the amount of stack that remains unused when the stack consumed by the program is at its greatest value. By subtracting this figure to the total stack available, which is known, one can obtain the stack peak used by the app.
+栈是程序执行时使用的函数所消耗的内存。虽然静态内存可以通过分析编译的二进制对象直接计算，但栈是应用程序运行之前无法精确知道的内存块。程序执行期间消耗的栈是通过 FreeRTOS 特定的函数考虑的，该函数涉及此 RTOS 提供的内存管理功能，即 uxTaskGetStackHighWaterMark() 函数。该函数返回当程序消耗的栈达到最大值时剩余的未使用栈量。通过从这个已知可用总栈中减去这个数字，可以获得应用程序使用的峰值栈。
 
-*Dynamic Memory*
+*动态内存*
 
-This is the memory dynamically allocated by the program by calls to `calloc()` and `malloc()` functions in the C language. To measure it we have hijacked the call to dynamic memory related functions since the ROS 2 stack allows users to feed the program with custom memory allocators. 
+这是程序通过 C 语言中的 `calloc()` 和 `malloc()` 函数动态分配的内存。为了测量它，我们劫持了与动态内存相关的函数调用，因为 ROS 2 栈允许用户为程序提供自定义内存分配器。
 
-To better understand micro-ROS’ use of dynamic memory, we need to differentiate between two stages of the micro-ROS operation. In the first stage micro-ROS is initialized, entities such as nodes, publishers and subscribers are created, and all layers get ready for operation. This is the configuration stage and micro-ROS performs all the dynamic memory operations here. The second is the operation stage, in which the actual publications, subscriptions and all other node operations occur. This stage is dynamic memory free in the whole micro-ROS stack. An optional third stage exists, in which the micro-ROS layers are closed and cleaned and all the dynamic memory allocated in the configuration stage is freed.
+为了更好地理解 micro-ROS 对动态内存的使用，我们需要区分 micro-ROS 操作的两个阶段。在第一阶段，micro-ROS 被初始化，实体如节点、发布者和订阅者被创建，所有层准备好操作。这是配置阶段，micro-ROS 在此执行所有动态内存操作。第二阶段是操作阶段，在该阶段发生实际发布、订阅和所有其他节点操作。这一阶段在整个 micro-ROS 栈中不使用动态内存。存在一个可选的第三阶段，在该阶段中，micro-ROS 层被关闭和清理，第一阶段分配的所有动态内存被释放。
 
-## Measurements and methodology
+## 测量和方法
 
-### Tested scenarios
+### 测试场景
 
-In this section, we summarize the experimental setup and the different scenarios explored in order to provide a comprehensive review on the memory footprint of the micro-ROS library.
+在本节中，我们总结了实验设置和探索的不同场景，以便对 micro-ROS 库的内存占用进行全面审查。
 
-In general, our aim is to assess how both the total memory and its independent constituents (static, stack and dynamic) are affected by:
+总体而言，我们的目标是评估总内存及其独立组成部分（静态、栈和动态）如何受到以下因素的影响：
 
-* The topic size (in the form of an array of bytes of variable size)
-* The number of ROS entities (pub/sub and service/client)
-* The communication stream type used (Reliable vs Best-Effort)
+* 主题大小（以可变大小的字节数组形式）
+* ROS 实体数量（发布/订阅和客户端/服务器）
+* 使用的通信流类型（可靠 vs 尽力而为）
 
-In the first setup, we analyse the total memory consumption of applications that publish or subscribe to topics of variable size while sweeping through the number of entities (publishers and subscribers) and employ UDP transport. We do so for the two different QoS types, Reliable and Best-Effort.
+在第一种设置中，我们分析了发布或订阅可变大小主题的应用程序的总内存消耗，同时改变实体数量（发布者和订阅者），并使用 UDP 传输。我们针对两种不同的 QoS 类型（可靠和尽力而为）进行了测试。
 
-In the second setup, we report on how the total memory is distributed between static, stack and dynamic.
+在第二种设置中，我们报告了总内存如何在静态、栈和动态之间分配。
 
-The third set of measurements was taken for one subscription only, for a fixed message size and varying the history cache of the RMW layer from 1 to 20 units.
+第三组测量仅针对一个订阅进行，消息大小固定，RMW 层的历史缓存从 1 到 20 不等。
 
-In the fourth set of measurements we measure the footprint of applications of requesters/repliers that act according to a client/service pattern.
+在第四组测量中，我们测量了根据客户端/服务器模式运行的请求者/回复者应用程序的占用空间。
 
-### Results
+### 结果
 
-In this section, we detail the methodology employed for the memory profiling of the experimental configurations described above, and for each of them we present the results obtained.
+在本节中，我们详细说明了上述实验配置的内存性能分析方法，并为每个配置提供了获得的结果。
 
-The measurements are conducted on a micro-ROS Client application with a varying number of entities: either publishers/subscribers (from 1 to 15) or client/server (from 1 to 10).
+测量是在具有不同数量实体的 micro-ROS 客户端应用程序上进行的：发布者/订阅者（从 1 到 15）或客户端/服务器（从 1 到 10）。
 
-All the tested apps run on top of FreeRTOS and inside of an ESP32 board. The board is connected by UDP transport (WiFi) to a micro-ROS Agent running on a Linux machine. As explained above, the choice of FreeRTOS has been by virtue of its memory management functionalities, which easily allow to compute the memory used by applications.
+所有测试的应用程序都在 FreeRTOS 上运行，并在 ESP32 开发板内。该开发板通过 UDP 传输（WiFi）连接到在 Linux 机器上运行的 micro-ROS 代理。如上所述，选择 FreeRTOS 是因为它的内存管理功能，可以轻松计算应用程序使用的内存。
 
-In order to provide an assessment as much realistic as possible, the following parameters have been set to their default values: the creation mode employed was by XML in all tested cases, the MTU was held fixed to its default value of 512 B, and the XRCE-DDS library history cache was always kept fixed to 4.
+为了提供尽可能真实的评估，以下参数设置为其默认值：在所有测试用例中使用的创建模式是 XML，MTU 固定为其默认值 512 字节，XRCE-DDS 库历史缓存始终保持为 4。
 
-#### Pub-Sub apps
+#### 发布-订阅应用程序
 
-*Total memory as a function of entities number and message size*
+*总内存作为实体数量和消息大小的函数*
 
-In this section, we report the total memory used by either publisher or subscriber applications in both Best-Effort and Reliable modes, using UDP transport, an RMW history of 8 shared slots, an MTU of 512 B and an XRCE-DDS history of 4 slots. The total memory consumption is reported as a function of the entity number and message size.
+在本节中，我们报告了在使用 UDP 传输、RMW 历史记录为 8 个共享槽位、MTU 为 512 字节和 XRCE-DDS 历史记录为 4 个槽位的条件下，尽力而为和可靠模式下发布者或订阅者应用程序使用的总内存。报告的总内存作为实体数量和消息大小的函数。
 
-The number of publishers/subscribers has been varied, which is equivalent to changing the number of topics, since in our design of the set-up we associate each publisher/subscriber with just one topic.
+发布者/订阅者的数量发生了变化，这等同于改变主题的数量，因为我们设计的设置中每个发布者/订阅者只关联一个主题。
 
-In principle, in the Reliable case one can occupy the generated buffers with message sizes up to MTU &#215; XRCE_history, whereas in the Best-Effort case it can be filled with messages with size up to MTU, which correspond respectively to to 512 B &#215; 4 = 2048 B and 512 B with our default chosen values. This is due to the absence of fragmentation in Best-Effort communication streams, while, thanks to fragmentation, an entity communicating in Reliable mode can send/receive a message opportunely chunked in a number of pieces equal to the XRCE_history, each of the size of the MTU. However, from table 1 one can see the message size only ranges from 0 and 1366 B in the case of Reliable entities, and between 0 and 490 B for entities in Best-Effort mode. This is due to the fact that in both cases some memory is consumed by headers and, most importantly, in the Reliable case, some is consumed by confirmation messages such as heartbeats and acknacks.
+原则上，在可靠模式下，可以使用生成的缓冲区存储最大为 MTU × XRCE_history 的消息大小，而在尽力而为模式下，只能填充最大为 MTU 的消息，分别对应我们选择的默认值 512 字节 × 4 = 2048 字节和 512 字节。这是由于尽力而为通信流中不存在分片，而由于分片，使用可靠模式通信的实体可以发送/接收被适当分片为 XRCE_history 块数量的消息，每块大小为 MTU。然而，从表 1 可以看出，可靠实体的情况消息大小仅在 0 到 1366 字节之间，而尽力而为模式下的实体在 0 到 490 字节之间。这是因为在两种情况下，一些内存被头消耗，最重要的是，在可靠模式下，一些被确认消息（如心跳和 acknacks）消耗。
 
-<img alt="Total memory" src="overall.png" class="center">
+<img alt="总内存" src="overall.png" class="center">
 
 <p align="center">
-  Fig 3: Total memory usage (in Bytes) of micro-ROS publisher and subscription applications in both Best-Effort and Reliable modes with UDP transport, default parameters and as a function of the entities number (x axis) and of the message size (legend).
+  图 3：使用 UDP 传输、默认参数时，micro-ROS 发布者和订阅应用程序在尽力而为和可靠模式下的总内存使用量（以字节为单位），作为实体数量（x 轴）和消息大小（图例）的函数。
 </p>
 
-From these plots, we can draw some conclusions and observe trends.
+从这些图表中，我们可以得出一些结论并观察趋势。
 
-First of all it appears clear that the total memory consumption varies with the number of entities but not with the message size. The reason for this is that all message sizes explored fit into the static buffers pre-allocated by the program at compile-time. We therefore expect that the memory consumption would only vary with the message size when the total space occupied by the topic plus the confirmation messages (in the reliable case) and the overhead exceeds the buffer size. In the case of increasing the number of entities, instead, the overall memory grows (as we’ll see below, this is driven by an increase in both the static and the dynamic memories, while the stack is not affected).
+首先，总内存消耗随实体数量而变化，但不随消息大小而变化。原因是所有探索的消息大小都适合程序在编译时预分配的静态缓冲区。因此，我们预计只有当主题加上开销（可靠情况下）占用的总空间超过缓冲区大小时，内存消耗才会随消息大小而变化。另一方面，随着实体数量的增加，整体内存会增长（如下所示，这由静态和动态内存的增加驱动，而栈不受影响）。
 
-By performing a simple calculation, we can see that the memory occupied by one publisher under the above experimental conditions is of ~ 400 B, while that occupied by one subscriber is ~ 500 B.
-The fact that there is virtually no substantial difference between the memory usage of these two entities, notwithstanding the fact that subscribers have a RMW_history associated, is ascribable to the fact that the memory pools of the RMW are shared among all the entities participating in a given application, and therefore it doesn't mark a difference between subscribers (in need to store messages before they are fetched from the higher layers) and publishers.
+通过简单计算，我们可以看到在上述实验条件下，一个发布者占用的内存约为 400 字节，而一个订阅者占用的内存约为 500 字节。
 
-Finally, we see that there is no substantial difference between Reliable and Best-Effort modes, exception made for the upper threshold of the message size that can be sent in these two modes, as explained at the beginning of this section.
+这两个实体的内存使用几乎没有任何实质差异，实际上尽管订阅者有相关的 RMW_history，但原因在于 RMW 的内存池在给定应用程序的所有参与实体之间共享，因此在订阅者（在从高层获取之前需要存储消息）和发布者之间没有明显差异。
 
-*Memory breakdown*
+最后，我们看到可靠模式和尽力而为模式之间没有实质性差异，除了如本节开头所解释的，这两种模式下可发送的消息大小的上限阈值存在差异。
 
-To get a better insight on the type of memory consumed by these applications, below we provide the same data but broken down into its constituent memory chunks. We do so for just one message size (1 B), since, as we have seen, this number doesn’t affect the total memory consumed (nor its constituents).
+*内存细分*
 
-<img alt="Memory breakdown" src="3mems.png" class="center">
+为了更好地了解这些应用程序消耗的内存类型，下面我们提供相同的数据，但细分为其组成部分。我们只针对一种消息大小（1 字节）进行此操作，因为如前所述，这个数字不会影响总内存消耗（及其组成部分）。
+
+<img alt="内存细分" src="3mems.png" class="center">
 
 <p align="center">
-   Fig 4: Static, stack and dynamic memory usage (in Bytes) of micro-ROS publisher and subscription applications in both Best-Effort and Reliable modes with UDP transport, default parameters and fixed message size as a function of the entities number.
+   图 4：使用 UDP 传输、默认参数和固定消息大小时，micro-ROS 发布者和订阅应用程序在尽力而为和可靠模式下的静态、栈和动态内存使用量（以字节为单位），作为实体数量的函数。
 </p>
 
-From these results we see that both the static and the dynamic memories change with the entity number, while the stack stays constant.
+从这些结果我们可以看到，静态和动态内存随实体数量而变化，而栈保持不变。
 
-*Role of the RMW history*
+*RMW 历史记录的作用*
 
-In this scenario, we have measured the static memory consumed as a function of the RMW history, when this ranges from 1 to 20 units, for a single subscriber application and with a message of fixed size (again, as seen above this size doesn’t affect the memory consumption as long as it’s smaller than the pre-allocated buffer size), with UDP transport and an XRCE-DDS history of 4, using Reliable communication. The results are summarized in the plot below:
+在这种情况下，我们测量了当 RMW 历史记录从 1 到 20 不等时，静态内存作为 RMW 历史记录的函数，针对单个订阅应用程序和固定大小的消息（同样，如上所述，只要该消息大小小于预分配的缓冲区大小，就不会影响内存消耗），使用 UDP 传输和 XRCE-DDS 历史记录为 4，使用可靠通信。结果总结在下面的图表中：
 
-<img alt="RMW history" src="rmw_history.png" class="center" width="60%">
+<img alt="RMW 历史记录" src="rmw_history.png" class="center" width="60%">
 
 <p align="center">
-   Fig 5: Static memory usage (in Bytes) of a micro-ROS subscription application in reliable mode with UDP transport, default parameters and fixed message size as a function of the RMW history.
+   图 5：使用 UDP 传输、默认参数和固定消息大小时，可靠模式下 micro-ROS 订阅应用程序的静态内存使用量（以字节为单位），作为 RMW 历史记录的函数。
 </p>
 
-From this plot, we see that the total static memory used changes by MTU &#215; RMW_history (which is equal to 512 &#215; 4 for the parameters employed) for each unit of RMW memory that we add to the application.
+从该图我们可以看到，每向应用程序添加一个 RMW 内存单元，使用的总静态内存变化为 MTU × RMW_history（对于所使用的参数等于 512 × 4）。
 
-#### Client-Server apps
+#### 客户端-服务器应用程序
 
-We now pass to investigate our last case-scenario, where in spite of pub/sub apps, we consider a different kind of ROS object, that of services, in which the communication between entities follow a request/reply pattern. See below the results for the memory consumed, for a number of servers and clients ranging from 1 to 10. Notice that we report both the behaviour and values of the individual consituents (static, stack, and dynamic) and of the total memory.
+现在我们继续研究最后一种情况，与发布/订阅应用程序不同，我们考虑不同类型的 ROS 对象，即服务，其中实体之间的通信遵循请求/回复模式。下面是消耗的内存结果，服务器和客户端的数量从 1 到 10 不等。请注意，我们报告了各个组成部分（静态、栈和动态）的行为和值以及总内存。
 
-<img alt="Services" src="servcli.png" class="center">
+<img alt="服务" src="servcli.png" class="center">
 
 <p align="center">
-   Fig 6: Total memory usage (in Bytes) of micro-ROS service and clients applications as a function of the number of servers and clients.
+   图 6：micro-ROS 服务和客户端应用程序的总内存使用量（以字节为单位），作为服务器和客户端数量的函数。
 </p>
 
-As already done in the case of publishers and subscribers, we can calculate the total memory consumed by a single entity. From this calculation it results that the memory occupied by one server or one client is on the order of ~ 300 B. From this figure, we see that the memory occupied by a server and that occupied by a client is virtually identical, and it is on the same order of magnitude as that occupied by a publisher or subscriber application.
+与发布者和订阅者所做的一样，我们可以计算单个实体消耗的总内存。从此计算可以看出，一个服务器或一个客户端占用的内存在约 300 字节左右。从这个数字我们可以看到，服务器和客户端占用的内存几乎相同，其大小与发布者或订阅者应用程序占用的内存在数量级上相同。
 
-### Conclusions
+### 结论
 
-To sum up, we have seen that:
+总而言之，我们已经看到：
 
-* Memory consumption doesn’t vary with message size as long as the sum of the latter plus the overheads can be accommodated by the static buffer pre-allocated at compile-time.
-* Static and Dynamic memories vary with the entity number, while the stack remains constant.
-* A single publisher/subscriber app with default configuration parameters and with UDP transport consumes ~ 400-500 B of total memory.
-* A single client/server app with default configuration parameters and with UDP transport consumes ~ 300 B of total memory, on the same order of magnitude of pub/sub applications.
-* In the case of a single subscription, the total static memory used changes by MTU &#215; XRCE_history for each unit of RMW history that is added to the application.
-
-<style type="text/css">
-
-.center {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-</style>
-
+* 只要后者加上开销的总和可以容纳在编译时预分配的静态缓冲区中，内存消耗就不会随消息大小而变化。

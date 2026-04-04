@@ -1,5 +1,5 @@
 ---
-title: Lifecycle and System Modes
+title: 生命周期和系统模式
 permalink: /docs/concepts/client_library/lifecycle_and_system_modes/
 redirect_from:
   - /system_modes/
@@ -7,116 +7,116 @@ redirect_from:
 ---
 
 
-Table of contents
-- [Introduction and Goal](#introduction-and-goal)
-- [Requirements](#requirements)
-- [Background: ROS 2 Lifecycle](#background-ros-2-lifecycle)
-- [Main Features](#main-features)
-  - [Basic Lifecycle](#basic-lifecycle)
-  - [Extended Lifecycle](#extended-lifecycle)
-  - [System Hierarchy and Modes](#system-hierarchy-and-modes)
-  - [Mode Inference](#mode-inference)
-  - [Mode Manager](#mode-manager)
-  - [Error Handling and Rules](#error-handling-and-rules)
-- [Acknowledgments](#acknowledgments)
+目录
+- [简介和目标](#introduction-and-goal)
+- [需求](#requirements)
+- [背景：ROS 2 生命周期](#background-ros-2-lifecycle)
+- [主要特性](#main-features)
+  - [基础生命周期](#basic-lifecycle)
+  - [扩展生命周期](#extended-lifecycle)
+  - [系统层次结构和模式](#system-hierarchy-and-modes)
+  - [模式推理](#mode-inference)
+  - [模式管理器](#mode-manager)
+  - [错误处理和规则](#error-handling-and-rules)
+- [致谢](#acknowledgments)
 
-## Introduction and Goal
+## 简介和目标
 
-Modern robotic software architectures often follow a layered approach. The layer with the core algorithms for SLAM, vision-based object recognition, motion planning, etc. is often referred to as *skill layer* or *functional layer*. To perform a complex task, these skills are orchestrated by one or more upper layers named *executive layer and planning layer*. Other common names are *task and mission layer* or *deliberation layer(s)*. In the following, we used the latter term.
+现代机器人软件架构通常采用分层方法。包含 SLAM、基于视觉的目标识别、运动规划等核心算法的层通常被称为*技能层*或*功能层*。为了执行复杂任务，这些技能由一个或多个上层进行协调，这些上层被称为*执行层和规划层*。其他常见名称包括*任务和任务层*或* deliberation 层*。在本文中，我们使用后者。
 
-We observed three different but closely interwoven aspects to be handled on the deliberation layer:
+我们观察到在 deliberation 层需要处理三个不同但密切相关的方面：
 
-1. **Task Handling**: Orchestration of the actual task, the *straight-forward*, *error-free* flow.
-2. **Contingency Handling**: Handling of task-specific contingencies, e.g., expectable retries and failure attempts, obstacles, low battery.
-3. **System Error Handling**: Handling of exceptions, e.g., sensor/actuator failures.
+1. **任务处理**：对实际任务的协调，即*直接*、*无错误*的流程。
+2. **偶发情况处理**：处理特定任务的偶发情况，例如可预见的重试和失败尝试、障碍物、电量不足。
+3. **系统错误处理**：处理异常情况，例如传感器/执行器故障。
 
-The mechanisms being used to orchestrate the skills are service and action calls, re-parameterizations, set values, activating/deactivating of components, etc. We distinguish between *function-oriented calls* to a running skill component (set values, action queries, etc.) and *system-oriented calls* to individual or multiple components (switching between component modes, restart, shutdown, etc.).
+用于协调技能的机制包括服务调用和动作调用、重新参数化、设置值、激活/停用组件等。我们区分对运行中的技能组件的*面向功能调用*（设置值、动作查询等）和对单个或多个组件的*面向系统调用*（在组件模式之间切换、重启、关闭等）。
 
-![Interaction between skill and deliberation layer](interactions_between_skill_and_deliberation_layer.png)
+![技能层和 deliberation 层之间的交互](interactions_between_skill_and_deliberation_layer.png)
 
-Analogously, we distinguish between *function-oriented notifications* from the skill layer in form a feedback on long-running service calls, messages on relevant events in the environment, etc. and *system-oriented notifications* about component failures, hardware errors, etc.
+类似地，我们区分来自技能层的*面向功能通知*（以对长时间运行的服务调用的反馈形式、关于环境中相关事件的消息等）和关于组件故障、硬件错误等的*面向系统通知*。
 
-Our observation is that interweaving of task handling, contingency handling, and system error handling generally leads to a high complexity of the control flow on the deliberation layer. Yet, we hypothesize that this complexity can be reduced by introducing appropriate abstractions for system-oriented calls and notifications.
+我们的观察是，任务处理、偶发情况处理和系统错误处理的交织通常会导致 deliberation 层的控制流高度复杂。然而，我们假设通过为面向系统的调用和通知引入适当的抽象，可以降低这种复杂性。
 
-Therefore, our **goal** within this work is to provide suitable abstractions and framework functions for (1.) system runtime configuration and (2.) system error and contingency diagnosis, to reduce the effort for the application developer of designing and implementing the task, contingency and error handling.
+因此，我们在这项工作中的**目标**是提供合适的抽象和框架功能，用于（1）系统运行时配置和（2）系统错误和偶发情况诊断，以减少应用开发者在设计和实现任务、偶发情况和错误处理方面的工作量。
 
-This goal is illustrated in the following example architecture, which is described and managed based on a model file:
+此目标在下图所示的示例架构中进行了说明，该架构基于模型文件进行描述和管理：
 
-![High-level Architecture](mode-management.png)
+![高层架构](mode-management.png)
 
-The main features of the approach are (detailed in the remainder):
+该方法的主要特性（在本文档的其余部分有详细说明）如下：
 
-1. _Extended Lifecycle_: Extensible concept to specify the runtime states of components, i.e ROS 2 lifecycle nodes.
-2. _System Hierarchy and Modes_: Modeling approach for specifying a ROS system in terms of its system hierarchy and _system modes_, i.e. different (sub-)system configurations.
-3. _Mode Inference_: A module for deriving the entire system state and mode from observable system information, i.e. states, modes, and parameters of its components.
-4. _Mode Manager_: A module to manage and change the system runtime configuration.
-5. _Error Handling_: Lightweight concept for specifying an error handling and recovery mechanism.
+1. _扩展生命周期_：用于指定组件运行时状态的可扩展概念，即 ROS 2 生命周期节点。
+2. _系统层次结构和模式_：用于根据系统层次结构和*系统模式*（即不同的（子）系统配置）指定 ROS 系统的建模方法。
+3. _模式推理_：用于根据可观察的系统信息（即组件的状态、模式和参数）推导整个系统状态和模式的模块。
+4. _模式管理器_：用于管理和更改系统运行时配置的模块。
+5. _错误处理_：用于指定错误处理和恢复机制的轻量级概念。
 
-## Requirements
+## 需求
 
-The list of requirements is maintained in the doc folder of the micro-ROS system modes repository, at:
+需求列表保存在 micro-ROS 系统模式仓库的 doc 文件夹中，网址为：
 https://github.com/micro-ROS/system_modes/blob/master/system_modes/doc/requirements.md
 
-## Background: ROS 2 Lifecycle
+## 背景：ROS 2 生命周期
 
-Our approach is based on the ROS 2 Lifecycle. The primary goal of the ROS 2 lifecycle is to allows greater control over the state of a ROS system. It allows consistent initialization, restart and/or replacing of system parts during runtime. It provides a default lifecycle for managed ROS 2 nodes and a matching set of tools for managing lifecycle nodes.
+我们的方法基于 ROS 2 生命周期。ROS 2 生命周期的首要目标是允许更好地控制 ROS 系统的状态。它允许在运行时一致地初始化、重新启动和/或更换系统部件。它为托管的 ROS 2 节点提供了默认生命周期以及用于管理生命周期节点的匹配工具集。
 
-The description of the concept can be found at:
+概念描述可访问：
 [http://design.ros2.org/articles/node_lifecycle.html](http://design.ros2.org/articles/node_lifecycle.html)
-The implementation of the Lifecycle Node is described at:
+生命周期节点的实现描述见：
 [https://design.ros2.org/articles/node_lifecycle.html](https://design.ros2.org/articles/node_lifecycle.html).
 
-## Main Features
+## 主要特性
 
-### Basic Lifecycle
+### 基础生命周期
 
-The ROS 2 Lifecycle has been implemented for micro-ROS as part of the C programming language client library *[rclc](https://github.com/ros2/rclc)*, see [rclc_lifecycle](https://github.com/ros2/rclc/tree/master/rclc_lifecycle) for source-code and documentation.
+ROS 2 生命周期已作为 C 编程语言客户端库*[rclc](https://github.com/ros2/rclc)*的一部分为 micro-ROS 实现，请参阅 [rclc_lifecycle](https://github.com/ros2/rclc/tree/master/rclc_lifecycle) 获取源代码和文档。
 
-The rclc_lifecycle package is a ROS 2 package that provides convenience functions to bundle a ROS Client Library (rcl) node with the ROS 2 Node Lifecycle state machine in the C programming language, similar to the [rclcpp Lifecycle Node](https://github.com/ros2/rclcpp/blob/master/rclcpp_lifecycle/include/rclcpp_lifecycle/lifecycle_node.hpp) for C++.
+rclc_lifecycle 包是一个 ROS 2 包，提供了便捷函数，用于将 ROS 客户端库（rcl）节点与 C 编程语言中的 ROS 2 节点生命周期状态机捆绑在一起，类似于 C++ 的 [rclcpp 生命周期节点](https://github.com/ros2/rclcpp/blob/master/rclcpp_lifecycle/include/rclcpp_lifecycle/lifecycle_node.hpp)。
 
-An example, how to use the rclc Lifecycle Node is given in the file `lifecycle_node.c` in the [rclc_examples](https://github.com/ros2/rclc/blob/master/rclc_examples/) package.
+[rclc_examples](https://github.com/ros2/rclc/blob/master/rclc_examples/) 包中的文件 `lifecycle_node.c` 提供了如何使用 rclc 生命周期节点的示例。
 
-### Extended Lifecycle
+### 扩展生命周期
 
-In micro-ROS, we extend the ROS 2 lifecycle by allowing to specify modes, i.e. substates, specializing the *active* state based on the standard ROS 2 parameters mechanism. We implemented this concept based on rclc_lifecycle and rclcpp_lifecycle for ROS 2 and micro-ROS.
+在 micro-ROS 中，我们通过允许指定模式（即子状态，基于标准 ROS 2 参数机制专门化*活动*状态）来扩展 ROS 2 生命周期。我们基于 rclc_lifecycle 和 rclcpp_lifecycle 为 ROS 2 和 micro-ROS 实现了这一概念。
 
-Documentation and code can be found at:
+文档和代码见：
 [github.com:system_modes/README.md#lifecycle](https://github.com/micro-ROS/system_modes/blob/master/system_modes/README.md#lifecycle)
 
-### System Hierarchy and Modes
+### 系统层次结构和模式
 
-We provide a modeling concept for specifying the hierarchical composition of systems recursively from nodes and for specifying the states and modes of systems and (sub-)systems with the extended lifecycle, analogously to nodes. This system modes and hierarchy (SMH) model also includes an application-specific the mapping of the states and modes along the system hierarchy down to nodes.
+我们提供了一种建模概念，用于递归地从节点指定系统的层次组合，并使用扩展生命周期（类似于节点）指定系统和（子）系统的状态和模式。此系统模式和层次结构（SMH）模型还包括应用程序特定的模式和状态沿系统层次结构向下到节点的映射。
 
-The description of this model can be found at:
+此模型的描述见：
 [github.com:system_modes/README.md#system-modes](https://github.com/micro-ROS/system_modes/blob/master/system_modes/README.md#system-modes)
-A simple example is provided at:
-[github.com:system_modes_examples/README.md#example-mode-file](https://github.com/micro-ROS/system_modes/blob/master/system_modes_examples/README.md#example-mode-file)
+简单示例见：
+[github.com:system_modes_examples/README.md#example-mode-file](https://github.com/micro-ROS/system_modes_examples/README.md#example-mode-file)
 
-### Mode Inference
+### 模式推理
 
-The mode inference infers the entire system states (and modes) based on the lifecycle states, modes, and parameter configuration of its components, i.e. the ROS 2 lifecyle nodes. It parses the SMH model and subscribes to lifecycle/mode change requests, lifecycle/mode changes, and parameter events.
+模式推理根据其组件（即 ROS 2 生命周期节点）的生命周期状态、模式和参数配置来推断整个系统状态（和模式）。它解析 SMH 模型并订阅生命周期/模式更改请求、生命周期/模式更改和参数事件。
 
-Based on the lifecycle change events it knows the _actual_ lifecycle state of all nodes. Based on parameter change events it knows the _actual_ parameter values of all nodes, which allows inference of the _modes_ of all nodes based on the SMH model.
-Based on the SMH model and the inferred states and modes of all nodes, states and modes of all (sub-)systems can be _inferred_ bottom-up along the system hierarchy.
-This can be compared to the latest _requested_ states and modes to detect a deviation.
+根据生命周期更改事件，它了解所有节点的*实际*生命周期状态。根据参数更改事件，它了解所有节点的*实际*参数值，这允许根据 SMH 模型推断所有节点的*模式*。
+根据 SMH 模型以及所有节点推断的状态和模式，可以沿系统层次结构自下而上地*推断*所有（子）系统 的状态和模式。
+这可以与最新*请求*的状态和模式进行比较，以检测偏差。
 
-The documentation and code can be found at:
+文档和代码见：
 [github.com:system_modes/README.md#mode-inference](https://github.com/micro-ROS/system_modes/blob/master/system_modes/README.md#mode-inference)
-The mode inference can be best observed in the mode monitor, a console-based debugging tool, see:
+模式推理最好在模式监视器中观察，这是一个基于控制台的调试工具，见：
 [github.com:system_modes/README.md#mode-monitor](https://github.com/micro-ROS/system_modes/blob/master/system_modes/README.md#mode-monitor)
 
-### Mode Manager
+### 模式管理器
 
-Building upon the _Mode Inference_ mechanism, the mode manager provides additional services and topics to _manage and adapt_ system states and modes according to the specification in the SMH model.
+基于*模式推理*机制，模式管理器提供额外的服务和主题，以根据 SMH 模型中的规范*管理和调整*系统状态和模式。
 
-The documentation and code can be found at:
+文档和代码见：
 [github.com:system_modes/README.md#mode-manager](https://github.com/micro-ROS/system_modes/blob/master/system_modes/README.md#mode-manager)
-A simple example is provided at:
-[github.com:system_modes_examples/README.md#setup](https://github.com/micro-ROS/system_modes/blob/master/system_modes_examples/README.md#setup)
+简单示例见：
+[github.com:system_modes_examples/README.md#setup](https://github.com/micro-ROS/system_modes_examples/README.md#setup)
 
-### Error Handling and Rules
+### 错误处理和规则
 
-If the _actual_ state/mode of the system or any of its parts diverges from the _target_ state/mode, we define rules that try to bring the system back to a valid _target_ state/mode, e.g., a degraded mode. Rules work in a bottom-up manner, i.e. starting from correcting nodes before sub-systems before systems. Rules are basically defined in the following way:
+如果系统或其任何部件的*实际*状态/模式与*目标*状态/模式存在偏差，我们定义了试图将系统恢复到有效的*目标*状态/模式的规则，例如降级模式。规则以自下而上的方式工作，即从纠正节点开始，然后是子系统，最后是系统。规则基本上按以下方式定义：
 
 ```pseudo
 if:
@@ -125,10 +125,10 @@ then:
  system.target := {specific state/mode}
 ```
 
-If _actual_ state/mode and _target_ state/mode diverge, but there is no rule for this exact situation, the bottom-up rules will just try to return the system/part to its _target_ state/mode.
+如果*实际*状态/模式与*目标*状态/模式存在偏差，但对于这种情况没有精确规则，自下而上的规则将只是尝试将系统/部件返回到其*目标*状态/模式。
 
-*Note:* This feature is suited for simple, well-defined rules according to the depicted syntax. For more complex orchestration, integration of system modes with ontological reasoning (*metacontrol*) has been validated and successfully shown in the [MROS project](https://robmosys.eu/mros/), e.g., within a [navigation sub-system of a mobile robot](https://github.com/MROS-RobMoSys-ITP/Pilot-URJC).
+*注意：*此特性适合根据所示语法定义简单、明确的规则。对于更复杂的编排，已验证系统模式与本体推理（*元控制*）的集成，并在 [MROS 项目](https://robmosys.eu/mros/)中成功展示，例如在[移动机器人导航子系统](https://github.com/MROS-RobMoSys-ITP/Pilot-URJC)中。
 
-## Acknowledgments
+## 致谢
 
-This activity has received funding from the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation programme (grant agreement n° 780785).
+此活动获得了欧洲研究理事会（ERC）在欧盟 Horizon 2020 研究和创新计划下的资助（资助协议编号 780785）。

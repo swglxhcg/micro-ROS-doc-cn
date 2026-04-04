@@ -1,5 +1,5 @@
 ---
-title: Supported Hardware
+title: 支持的硬件
 permalink: /docs/overview/hardware/
 ---
 
@@ -47,7 +47,7 @@ The micro-ROS hardware support is divided into two categories:
 
 *In order to check the most recent hardware support visit the [micro_ros_setup repo](https://github.com/micro-ROS/micro_ros_setup)*.
 
-## Officially supported boards
+## 官方支持的开发板
 
 The officially supported boards are those which have been carried out or tested officially, and to which LTS is guaranteed.
 
@@ -365,7 +365,7 @@ The officially supported boards are those which have been carried out or tested 
   </div>
 </div>
 
-## Community supported boards
+## 社区支持的开发板
 
 The micro-ROS community supported boards are contributions of micro-ROS' users and community, and are not guaranteed to be officially supported.
 

@@ -1,5 +1,5 @@
 ---
-title: Executor and timers
+title: 执行器和定时器
 permalink: /docs/tutorials/programming_rcl_rclc/executor/
 ---
 
@@ -13,12 +13,12 @@ permalink: /docs/tutorials/programming_rcl_rclc/executor/
   - [Example 1: 'Hello World'](#example-1-hello-world)
   - [Example 2: Triggered execution](#example-2-triggered-execution)
 
-## Timers
+## 定时器
 
 Timers can be created and added to the executor, which will call the timer callback periodically once it is spinning.
 They are usually used to handle periodic publications or events.
 
-### Initialization
+### 初始化
 
 ```c
 // Timer period on nanoseconds
@@ -37,7 +37,7 @@ if (rc != RCL_RET_OK) {
 }
 ```
 
-### Callback
+### 回调
 
 The callback gives a pointer to the associated timer and the time elapsed since the previous call or since the timer was created if it is the first call to the callback.
 
@@ -55,7 +55,7 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 
 During the callback the timer can be canceled or have its period and/or callback modified using the passed pointer. Check [rcl/timer.h](https://github.com/ros2/rcl/blob/iron/rcl/include/rcl/timer.h) for details.
 
-### Cleaning Up
+### 清理
 
 To destroy an initialized timer:
 
@@ -78,7 +78,7 @@ In this section we provide two examples:
 
 Further information about the rclc Executor and its API can be found [rclc](https://github.com/ros2/rclc/tree/master/rclc#rclc-executor) repository, including further examples for using the rclc Executor in mobile robotics scenarios and real-time embedded applications.
 
-### Example 1: 'Hello World'
+### 示例 1：'Hello World'
 
 To start with, we provide a very simple example for an rclc Executor with one timer and one subscription, so to say, a 'Hello world' example. It consists of a publisher, sending a 'hello world' message to a subscriber, which then prints out the received message on the console.
 
@@ -302,7 +302,7 @@ return 0;
 
 This completes the example. The source code can be found in the package rclc-examples [rclc-examples/example_executor_only_rcl.c](https://github.com/ros2/rclc/blob/master/rclc_examples/src/example_executor_only_rcl.c).
 
-### Example 2: Triggered execution
+### 示例 2：触发执行
 
 In robotic applications often multiple sensors are used to improve localization precision. These sensors can have different frequencies, for example, a high frequency IMU sensor and a low frequency laser scanner. One way is to trigger execution upon arrival of a laser scan and only then evaluate the most recent data from the aggregated IMU data.
 

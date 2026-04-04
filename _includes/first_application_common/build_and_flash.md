@@ -1,31 +1,28 @@
-## Building the firmware
+## 构建固件
 
-When the configuring step ends, just build the firmware:
+配置步骤结束后，直接构建固件：
 
 ```bash
-# Build step
+# 构建步骤
 ros2 run micro_ros_setup build_firmware.sh
 ```
 
-## Flashing the firmware
+## 烧录固件
 
-Flashing the firmware into the platform varies across hardware platforms.
-Regarding this tutorial's target platform
-(**[Olimex STM32-E407](https://www.olimex.com/Products/ARM/ST/STM32-E407/open-source-hardware)**),
-the JTAG interface is going to be used to flash the firmware.
+将固件烧录到平台的过程因硬件平台而异。
+关于本教程的目标平台（**[Olimex STM32-E407](https://www.olimex.com/Products/ARM/ST/STM32-E407/open-source-hardware)**），将使用 JTAG 接口来烧录固件。
 
-Connect the [Olimex ARM-USB-TINY-H](https://www.olimex.com/Products/ARM/JTAG/ARM-USB-TINY-H/) to the board:
+连接 [Olimex ARM-USB-TINY-H](https://www.olimex.com/Products/ARM/JTAG/ARM-USB-TINY-H/) 到开发板：
 
 <img width="400" style="padding-right: 25px;" src="../imgs/2.jpg">
 
-Make sure that the board power supply jumper (PWR_SEL) is in the 3-4 position in order to power the board from the
-JTAG connector:
+确保开发板电源跳线（PWR_SEL）处于 3-4 位置，以便通过 JTAG 接口为开发板供电：
 
 <img width="400" style="padding-right: 25px;" src="../imgs/1.jpg">
 
-Once you have your computer connected to the Olimex board through the JTAG adapter, run the flash step:
+将计算机通过 JTAG 适配器连接到 Olimex 开发板后，运行烧录步骤：
 
 ```bash
-# Flash step
+# 烧录步骤
 ros2 run micro_ros_setup flash_firmware.sh
 ```

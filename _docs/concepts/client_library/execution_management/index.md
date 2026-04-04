@@ -247,11 +247,11 @@ While periodic activation is possible in ROS 2 by using timers, preemptive sched
 - sequential processing of callbacks
 - data synchronization with LET semantics
 
-## rclc Executor
+## rclc 执行器
 
 The rclc Executor is a ROS 2 Executor based on the rcl-layer in C programming language. As discussed above, the default rclcpp Executor is not suitable to implement real-time applications because of three main reasons: timers are preferred over all other handles, no priorization of callback execution and the round-robin to completion execution of callbacks. On the other hand, several processing patterns have been developed as best practices to achieve non-functional requirements, such as bounded end-to-end latencies, low jitter of response times of cause-effect chains, deterministic processing and short response times even in overload situations. These processing patterns are difficult to implement with the concepts availabe in the default ROS 2 Executor, therefore we have developed a flexible Executor: the rclc Executor. 
 
-### Features
+### 特性
 
 The rclc Executor is feature-complete, i.e. it supports all event types as the default ROS 2 Executor, which are:
 - subscriptions
@@ -270,7 +270,7 @@ The flexible rclc Executor provides on top the following new features:
 
 First, a *trigger condition* allows to define when the processing of a callback shall start. This is useful to implement sense-plan-act control loops or more complex processing structures with directed acyclic graphs. Second, a user can specify the *processing order* in which these callbacks will be executed. With this feature, the pattern of sensor fusion with multiple rates, in which data is requested from a sensor based on the arrival of some other sensor, can be easily implemented. Third, the assignment of scheduling parameters (e.g., priorities) of the underlying operating system. With this feature, prioritized processing can be implemented. Finally, for periodic applications, the *LET Semantics* has been implemented to support data consistency for periodic process scheduling. These features are now described in more detail.
 
-#### Sequential execution
+#### 顺序执行
 
 - At configuration, the user defines the order of handles.
 - At configuration, the user defines whether the handle shall be called only when new data is available (ON_NEW_DATA) or whether the callback shall always be called (ALWAYS).
@@ -286,7 +286,7 @@ Figure 9 shows three callbacks, A, B and C. Assume, they shall be executed in th
 Figure 9: Sequential execution semantics.
 </center>
 
-#### Trigger condition
+#### 触发条件
 
 - Given a set of handles, a trigger condition, which is based on the availability of input data of these handles, decides when the processing of all callbacks starts. This is shown in Figure 10. 
 
@@ -335,7 +335,7 @@ Figure 14 describes the custom semantics. A custom trigger condition with could 
 Figure 14: Trigger condition user-defined
 </center>
 
-#### LET-Semantics
+#### LET 语义
 - Assumption: time-triggered system, the executor is activated periodically
 - When the trigger fires, reads all input data and makes a local copy
 - Processes all callbacks in sequential order
@@ -349,7 +349,7 @@ Additionally we have implemented the current rclcpp Executor semantics ("RCLCPP"
 
 The selection of the Executor semantics is optional. The default semantics is "RCLCPP".
 
-#### Multi-threading and scheduling configuration
+#### 多线程和调度配置
 
 The rclc Executor has been extended for multi-threading. It supports the assignment of scheduling policies, like priorities or more advanced scheduling algorithms as reservation-based scheduling, to subscription callbacks. [[Pull Request](https://github.com/ros2/rclc/pull/87), Pre-print [SLD2021](#SLD2021)]. The overall architecture is shown in Figure 15. One Executor thread is responsible for checking for new data from the DDS queue. For every callback, a thread is spawned with the dedicted scheduling policy provided by the operating system. The Executor then dispatches new data of a subscription to its corresponding callback function, which is then executed in its own thread by operating system.
 
@@ -360,9 +360,9 @@ The rclc Executor has been extended for multi-threading. It supports the assignm
 Figure 15: multi-threaded rclc-Executor
 </center>
 
-### Executor API
+### 执行器 API
 The API of the rclc Executor can be divided in two phases: Configuration and Running.
-#### Configuration phase
+#### 配置阶段
 During the configuration phase, the user shall define:
 - the total number of callbacks
 - the sequence of the callbacks
@@ -391,7 +391,7 @@ To be compatible with ROS2 rclcpp Executor, the existing rclcpp semantics is imp
 
 Secondly, the LET semantics is implemented such that at the beginning of processing all available data is fetched (rcl_take) and buffered and then the callbacks are processed in the pre-defined operating on the buffered copy.
 
-#### Running phase
+#### 运行阶段
 
 As the main functionality, the Executor has a `spin`-function which constantly checks for new data at the DDS-queue, like the rclcpp Executor in ROS2. If the trigger condition is satisfied then all available data from the DDS queue is processed according to the specified semantics (ROS or LET) in the user-defined sequential order. After all callbacks have been processed the DDS is checked for new data again.
 
@@ -400,10 +400,10 @@ Available spin functions are
 - `spin_period` - spin with a period
 - `spin` - spin indefinitly
 
-### Examples
+### 示例
 We provide the relevant code snippets how to setup the rclc Executor for the processing patterns as described above.
 
-#### Sense-plan-act pipeline in robotics example
+#### 机器人技术中的感知-规划-动作流水线示例
 
 In this example we want to realise a sense-plan-act pipeline in a single thread. The trigger condition is demonstrated by activating
 the sense-phase when both data for the Laser and IMU are available. Three executors are necessary `exe_sense`, `exe_plan` and `exe_act`. The two sensor acquisition callbacks `sense_Laser` and `sense_IMU` are registered in the Executor `exe_sense`.
@@ -436,7 +436,7 @@ while (true) {
 }
 ```
 
-#### Synchronization of multiple rates example
+#### 多速率同步示例
 
 The sensor fusion synchronizing the multiple rates with a trigger is shown below.
 
@@ -478,7 +478,7 @@ rclc_executor_set_trigger(&exe_sense, rclc_executor_trigger_one, &sense_Laser);
 // spin
 rclc_executor_spin(&exe_sense);
 ```
-#### High priority processing path example
+#### 高优先级处理路径示例
 
 This example shows the sequential processing order to execute the obstacle avoidance `obst_avoid`
 after the callbacks of the sense-phase and before the callback of the planning phase `plan`.
@@ -504,7 +504,7 @@ rclc_executor_set_trigger(&exe, rclc_executor_trigger_one, &sense_Laser);
 rclc_executor_spin(&exe);
 ```
 
-#### Real-time embedded applications example
+#### 实时嵌入式应用示例
 
 With sequential execution, the co-operative scheduling of tasks within a process can be modeled. The trigger condition is used to periodically activate the process which will then execute all callbacks in a pre-defined order. Data will be communicated using the LET-semantics. Every Executor is executed in its own thread, to which an appropriate priority can be assigned.
 
@@ -566,14 +566,14 @@ rclc_executor_data_comm_semantics(&exe, LET);
 rclc_executor_spin(&exe);
 ```
 
-#### ROS 2 Executor Workshop Reference System
+#### ROS 2 执行器研讨会参考系统
 The rclc Executor has been presented at the workshop 'ROS 2 Executor: How to make it efficient, real-time and deterministic?' at [ROS World 2021](https://roscon.ros.org/world/2021/) (i.e. the online version of ROSCon)[[S2021](#S2021)]. A [Reference System](https://github.com/ros-realtime/reference-system) for testing and benchmarking ROS Executors has been developed for this workshop. The application of the rclc Executor on the reference system with the trigger condition can be found in the [rclc-executor branch of the Reference System](https://github.com/ros-realtime/reference-system/tree/rclc_executor). 
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/IazrPF3RN1U" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 The slides can be downloaded [here](https://ec2a4d36-bac8-4759-b25e-bb1f794177f4.filesusr.com/ugd/984e93_749e27b917a54b45b9ccb5be930841b8.pdf). All information and the videos and slides of the other talks of the workshop can be found at [www.apex.ai/roscon-21](https://www.apex.ai/roscon-21).
 
-### Future work
+### 未来工作
 
 - Full LET semantics (writing data at the end of the period)
   - one publisher that periodically publishes
@@ -581,10 +581,10 @@ The slides can be downloaded [here](https://ec2a4d36-bac8-4759-b25e-bb1f794177f4
     publishing needs to be atomic
 - Multi-threaded executor with assignment of scheduling policies of underlying operating system. [[Pull Request](https://github.com/ros2/rclc/pull/87), pre-print [SLD2021](#SLD2021)].
 
-### Download
+### 下载
 The rclc Executor can be downloaded from the [ros2/rclc repository](https://github.com/ros2/rclc). It is available for the ROS 2 versions Humble, Iron and Rolling. The repository provides several packages including the [rclc Executor](https://github.com/ros2/rclc/tree/master/rclc) and an [rclc_examples package](https://github.com/ros2/rclc/tree/master/rclc_examples) with several application examples.
 
-## Callback-group-level Executor
+## 回调组级执行器
 
 The Callback-group-level Executor was an early prototype for a refined rclcpp Executor API developed in micro-ROS. It has been derived from the default rclcpp Executor and addresses some of the aforementioned deficits. Most important, it was used to validate that the underlying layers (rcl, rmw, rmw_adapter, DDS) allow for multiple Executor instances without any negative interferences.
 
@@ -600,7 +600,7 @@ The following figure illustrates this approach with two nodes served by three Ca
 
 The different callbacks of the Drive-Base node are distributed to different Executors (visualized by the color red, yellow and green).  For example the onCmdVel and publishWheelTicks callback are scheduled by the same Executor (yellow). Callbacks from different nodes can be serviced by the same Executor.
 
-### API Changes
+### API 更改
 
 In this section, we describe the necessary changes to the Executor API:
 *   [include/rclcpp/callback\_group.hpp](https://github.com/ros2/rclcpp/blob/master/rclcpp/include/rclcpp/callback_group.hpp):
@@ -623,7 +623,7 @@ In this section, we describe the necessary changes to the Executor API:
 
 The callback-group-level executor has been merged into ROS 2 rclcpp in [pull request 1218](https://github.com/ros2/rclcpp/pull/1218/commits).
 
-### Test Bench
+### 测试台
 
 As a proof of concept, we implemented a small test bench in the present package cbg-executor_ping-pong_cpp. The test bench comprises a Ping node and a Pong node which exchange real-time and best-effort messages simultaneously with each other. Each class of messages is handled with a dedicated Executor, as illustrated in the following figure.
 
@@ -641,15 +641,15 @@ In this example, the callback for the high priority task (red line) consumes 10m
 
 The test bench is provided in the [cbg_executor_demo](https://github.com/ros2/examples/tree/master/rclcpp/executors/cbg_executor).
 
-## Related Work
+## 相关工作
 
 In this section, we provide an overview to related approaches and link to the corresponding APIs.
 
-### Fawkes Framework
+### Fawkes 框架
 
 [Fawkes](http://www.fawkesrobotics.org/) is a robotic software framework, which supports synchronization points for sense-plan-act like execution. It has been developed by RWTH Aachen since 2006. Source code is available at [github.com/fawkesrobotics](https://github.com/fawkesrobotics).
 
-#### Synchronization
+#### 同步
 Fawkes provides developers different synchronization points, which are very useful for defining an execution order of a typical sense-plan-act application. These ten synchronization points (wake-up hooks) are the following (cf. [libs/aspect/blocked_timing.h](https://github.com/fawkesrobotics/fawkes/blob/master/src/libs/aspect/blocked_timing.h)):
 
 *   WAKEUP\_HOOK\_PRE\_LOOP
@@ -663,7 +663,7 @@ Fawkes provides developers different synchronization points, which are very usef
 *   WAKEUP\_HOOK\_ACT\_EXEC
 *   WAKEUP\_HOOK\_POST\_LOOP  
 
-#### Configuration at compile time
+#### 编译时配置
 At compile time, a desired synchronization point is defined as a constructor parameter for a module. For example, assuming that `mapLaserGenThread` shall be executed in SENSOR_ACQUIRE, the constructor is implemented as:
 
 ```C++
@@ -681,7 +681,7 @@ NaoQiButtonThread::NaoQiButtonThread()
      BlockedTimingAspect(BlockedTimingAspect::WAKEUP_HOOK_SENSOR_PROCESS)
 ```
 
-#### Runtime execution
+#### 运行时执行
 At runtime, the *Executor* iterates through the list of synchronization points and executes all registered threads until completion. Then, the threads of the next synchronization point are called.
 
 A module (thread) can be configured independent of these sense-plan-act synchronization points. This has the effect, that this thread is executed in parallel to this chain.
@@ -703,7 +703,7 @@ These concepts are implemented by the following main classes:
 * `ThreadManager`, which is derived from `BlockedTimingExecutor`, provides the necessary API to add and remove threads to wakeup hooks as well as for sequential execution of the wakeup-hooks.
 * `Barrier` is an object similar to `condition_variable` in C++.
 
-#### Discussion
+#### 讨论
 
 All threads are executed with the same priority. If multiple sense-plan-act chains shall be executed with different priorities, e.g. to prefer execution of emergency-stop over normal operation, then this framework reaches its limits.
 
@@ -727,7 +727,7 @@ URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8376277&isnumber=83
 -->
 
 
-## References
+## 参考文献
 * [S2021]<a name="S2021"></a> J. Staschulat, "Micro-ROS: The rclc Executor", in Workshop ROS 2 Executor: How to make it efficient, real-time and deterministic? at ROS World, Oct. 2021, [[slides](https://ec2a4d36-bac8-4759-b25e-bb1f794177f4.filesusr.com/ugd/984e93_749e27b917a54b45b9ccb5be930841b8.pdf)] [[Video](https://www.youtube.com/embed/IazrPF3RN1U)]
 
 * [SLD2021]<a name="SLD2021"></a> J. Staschulat, R. Lange and D. N. Dasari, "Budget-based real-time Executor for Micro-ROS", arXiv Pre-Print, May 2021. [[paper](https://arxiv.org/abs/2105.05590)] 
@@ -753,6 +753,6 @@ Proceedings of The Logical Execution Time Paradigm: New Perspectives for Multico
 
 * [LL1973]<a name="LL1973"></a> Liu, C. L.; Layland, J.:Scheduling algorithms for multiprogramming in a hard real-time environment, Journal of the ACM, 20 (1): 46–61, 1973.
 
-## Acknowledgments
+## 致谢
 
 This activity has received funding from the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation programme (grant agreement n° 780785).

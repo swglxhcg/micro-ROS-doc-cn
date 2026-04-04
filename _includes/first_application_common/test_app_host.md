@@ -1,18 +1,17 @@
-## Testing the micro-ROS app
+## 测试 micro-ROS 应用程序
 
-Now, we want to check that everything is working.
+现在，我们想检查一切是否正常工作。
 
-Open a new command line. We are going to listen to the `ping` topic
-with ROS 2 to check whether the micro-ROS Ping Pong node is correctly publishing the expected pings:
+打开一个新的命令行。我们将使用 ROS 2 监听 `ping` 主题，以检查 micro-ROS Ping Pong 节点是否正确发布预期的 ping：
 
 ```bash
 source /opt/ros/$ROS_DISTRO/setup.bash
 
-# Subscribe to micro-ROS ping topic
+# 订阅 micro-ROS ping 主题
 ros2 topic echo /microROS/ping
 ```
 
-You should see the topic messages published by the Ping Pong node every 5 seconds:
+您应该看到 Ping Pong 节点每 5 秒发布的主题消息：
 
 ```
 user@user:~$ ros2 topic echo /microROS/ping
@@ -28,30 +27,28 @@ frame_id: '730417256_1085377743'
 ---
 ```
 
-At this point, we know that our app is publishing pings.
-Let's check if it also answers to someone else's pings. If this works, it'll publish a pong.
+此时，我们知道我们的应用程序正在发布 ping。
+让我们检查它是否也会响应其他人的 ping。如果正常工作，它将发布一个 pong。
 
-So, first of all, let's subscribe with ROS 2 to the `pong` topic from a new shell
-(notice that initially we don't expect to receive any pong, since none has been sent yet):
+因此，首先让我们从新的 shell 中使用 ROS 2 订阅 `pong` 主题（请注意，最初我们不期望收到任何 pong，因为还没有发送）：
 
 ```bash
 source /opt/ros/$ROS_DISTRO/setup.bash
 
-# Subscribe to micro-ROS pong topic
+# 订阅 micro-ROS pong 主题
 ros2 topic echo /microROS/pong
 ```
 
-And now, let's publish a `fake_ping` with ROS 2 from yet another command line:
+现在，让我们从另一个命令行使用 ROS 2 发布一个 `fake_ping`：
 
 ```bash
 source /opt/ros/$ROS_DISTRO/setup.bash
 
-# Send a fake ping
+# 发送一个假 ping
 ros2 topic pub --once /microROS/ping std_msgs/msg/Header '{frame_id: "fake_ping"}'
 ```
 
-Now, we should see this `fake_ping` in the `ping` subscriber console,
-along with the micro-ROS pings:
+现在，我们应该在 `ping` 订阅者控制台中看到这个 `fake_ping`，以及 micro-ROS 的 ping：
 
 ```
 user@user:~$ ros2 topic echo /microROS/ping
@@ -72,7 +69,7 @@ frame_id: '2084670932_1085377743'
 ---
 ```
 
-Also, we expect that, because of having received the `fake_ping`, the micro-ROS node will answer with a `pong`:
+此外，由于收到了 `fake_ping`，我们期望 micro-ROS 节点会回复一个 `pong`：
 
 ```
 user@user:~$ ros2 run micro_ros_demos_rcl ping_pong
@@ -87,8 +84,7 @@ Ping send seq 1702133625_1085377743
 Ping send seq 176104820_1085377743
 ```
 
-As a consequence, in the `pong` subscriber console,
-we should see the micro-ROS app answer to our `fake_ping`:
+因此，在 `pong` 订阅者控制台中，我们应该看到 micro-ROS 应用程序对我们的 `fake_ping` 的回复：
 
 ```
 user@user:~$ ros2 topic echo /microROS/pong

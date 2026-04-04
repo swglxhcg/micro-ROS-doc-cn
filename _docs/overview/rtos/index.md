@@ -1,5 +1,5 @@
 ---
-title: Supported RTOSes
+title: 支持的 RTOS
 permalink: /docs/overview/rtos/
 ---
 
@@ -44,7 +44,7 @@ Find more details about each of the supported RTOSes below.
 For a more comprehensive explanation regarding the choice of working with Real-Time Operating Systems, and for a more technical comparison among these three RTOSes, please refer to the [RTOS page in the Concepts section](https://micro-ros.github.io/docs/concepts/rtos/), as the present page is meant to solely provide a schematic overview.
 
 
-## Real-Time Operating Systems officially supported by the project
+## 项目官方支持的实时操作系统
 
 In this section, we review the main features of the three RTOSes supported officially by the project, and provide links to useful documentation.
 
@@ -152,7 +152,7 @@ NuttX emphasizes its compliance with standards - including POSIX - and small foo
   </div>
 </div>
 
-## Bare metal support
+## 裸机支持
 
 Based on the release of micro-ROS as a standalone library with header files, and on the support provided to the Arduino IDE, micro-ROS is available as a bare-metal application, too.
 Find more details in the dedicated [repo](https://github.com/micro-ROS/micro_ros_arduino).
@@ -185,7 +185,7 @@ The open-source Arduino Software (IDE) is a library making it easy to program an
   </div>
 </div>
 
-## Experimentally supported Real-Time Operating Systems
+## 实验性支持的实时操作系统
 
 ### **Arm® Mbed™ OS**
 

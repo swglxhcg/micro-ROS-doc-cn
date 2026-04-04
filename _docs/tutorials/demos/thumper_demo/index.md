@@ -1,5 +1,5 @@
 ---
-title: Thumper, a six-wheeled robot
+title: Thumper - 六轮机器人
 layout: docs_noheader
 permalink: /docs/tutorials/demos/thumper_demo/
 redirect_from:

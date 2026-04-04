@@ -1,5 +1,5 @@
 ---
-title: Comparison between RTOSes
+title: RTOS 对比
 permalink: /docs/concepts/rtos/comparison/
 ---
 
@@ -26,7 +26,7 @@ The comparison regards the features listed below:
 * What is the effort in providing an additional layer for non-POSIX RTOS regarding micro-ROS or ROS 2?
 * Support of RTOS for specific HW platforms
 
-## Table of Comparisons
+## 对比表
 
 | **OS**                                                       | **NuttX**                                | **FreeRTOS**                                                                                                             | **Zephyr**                                                                                      |
 | ------------------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |

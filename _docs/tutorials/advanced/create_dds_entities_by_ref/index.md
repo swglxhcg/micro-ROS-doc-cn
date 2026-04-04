@@ -1,5 +1,5 @@
 ---
-title: How to use custom QoS in micro-ROS
+title: 如何在 micro-ROS 中使用自定义 QoS
 permalink: /docs/tutorials/advanced/create_dds_entities_by_ref/
 ---
 

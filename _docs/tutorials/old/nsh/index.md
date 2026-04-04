@@ -1,5 +1,5 @@
 ---
-title: NSH console over UART & USB
+title: NSH 控制台通过 UART 和 USB
 permalink: /docs/tutorials/old/nsh/
 ---
 
@@ -12,14 +12,14 @@ permalink: /docs/tutorials/old/nsh/
 NSH is a system console that can be used through different interfaces.
 In this tutorial, we will show how to use it over the UART and USB peripherals.
 
-## Hardware requirements:
+## 硬件要求
 
 - [Olimex-STM32-E407 board](https://www.olimex.com/Products/ARM/ST/STM32-E407/open-source-hardware)
 - [JTAG Flasher device](https://www.olimex.com/Products/ARM/JTAG/ARM-USB-TINY/)
 - USB-TTL232 cable.
 - Mini USB cable.
 
-## Create the firmware
+## 创建固件
 
 For this tutorial we are going to execute the following configuration in micro_ros_setup:
 
@@ -71,7 +71,7 @@ Info : Listening on port 6666 for tcl connections
 Info : Listening on port 4444 for telnet connections
 ```
 
-## Connect to the console
+## 连接控制台
 
 Finally, to use the NSH console you need to follow the steps listed below:
 - Push the reset button. The green LED will turn on to say that it is working properly.
